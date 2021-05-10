@@ -1,0 +1,7 @@
+recursive-include aetherpy/*.py
+include aetherpy/version.txt
+include *.txt
+include *.py
+include *.md
+include *.rst
+include LICENSE

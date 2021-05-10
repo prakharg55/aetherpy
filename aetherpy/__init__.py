@@ -4,6 +4,7 @@
 
 # Define a logger object to allow easier log handling
 import logging
+import os
 
 logging.raiseExceptions = False
 logger = logging.getLogger('aetherpy_logger')
@@ -12,4 +13,9 @@ logger = logging.getLogger('aetherpy_logger')
 from aetherpy import io, utils, plot
 
 # Define global variables
-__version__ = '0.0.1a'
+vfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'version.txt')
+with open(vfile, 'r') as fin:
+    __version__ = fin.read().strip()
+
+# Clean up
+del vfile

@@ -18,4 +18,4 @@ with open(vfile, 'r') as fin:
     __version__ = fin.read().strip()
 
 # Clean up
-del vfile
+del vfile, fin

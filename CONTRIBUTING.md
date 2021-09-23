@@ -26,10 +26,10 @@ into `ipython`:
 import aetherpy
 ```
 
-Or you may install it to test how it may work globally:
+Or you may install it to test how it may work globally while you continue to develop the code:
 
 ```python
-python setup.py install --user
+python setup.py develop --user
 ```
 
 ### Development

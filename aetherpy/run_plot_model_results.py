@@ -6,6 +6,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import re
+from glob import glob
 
 from aetherpy.io import read_routines
 from aetherpy.utils import inputs, time_conversion
@@ -86,12 +88,14 @@ def get_command_line_args(argv):
     # Initialize the arguments to their default values
     args = {'filelist': [], 'log': False, 'var': 15, 'alt': 400, 'tec': False,
             'lon': np.nan, 'lat': np.nan, 'cut': 'alt', 'winds': False,
-            'diff': False, 'gitm': False, 'movie': 0, 'ext': 'png'}
+            'diff': False, 'IsGitm': False, 'HasHeader': False, 'movie': 0,
+            'ext': 'png'}
 
     arg_type = {'filelist': list, 'log': bool, 'var': int, 'alt': int,
                 'tec': bool,
                 'lon': float, 'lat': float, 'cut': str, 'help': bool,
-                'winds': bool, 'diff': bool, 'gitm': bool, 'tec': bool,
+                'winds': bool, 'diff': bool, 'IsGitm': bool, 'HasHeader': bool,
+                'tec': bool,
                 'movie': int, 'ext': str}
 
     # If there is input, set default help to False
@@ -136,12 +140,17 @@ def get_command_line_args(argv):
             # Save the filenames
             args['filelist'].append(arg)
 
-            gitm = arg.find('bin') == len(arg) - 3
-
-            if len(args['filelist']) == 1:
-                args['gitm'] = gitm
-            elif gitm != args['gitm']:
-                raise ValueError('input files are of a mixed type')
+            m = re.match(r'(.*)bin',arg)
+            if m:
+                args['IsGitm'] = 1
+                args['HasHeader'] = 0
+                # check for a header file:
+                checkFile = glob(m.group(1)+"header")
+                if (len(checkFile) > 0):
+                    if (len(checkFile[0]) > 1):
+                        args['HasHeader'] = 1
+            else:
+                args['IsGitm'] = 0
 
     # Update default movie extention for POSIX systems
     if args['movie'] > 0 and args['ext'] == 'png':
@@ -165,12 +174,25 @@ def plot_model_results():
         print(help_str)
         return
 
-    # Read the file header
-    if args['gitm']:
-        header = read_routines.read_gitm_headers(args["filelist"])
+    IsGitm = args['IsGitm']
+    HasHeader = args['HasHeader']
+
+
+    if ((IsGitm) and (not HasHeader)):
+        header = read_routines.read_gitm_header(args["filelist"])
     else:
-        files = args["filelist"]
-        header = read_routines.read_aether_headers(files)
+        if (HasHeader):
+            header = read_routines.read_aether_ascii_header(args["filelist"])
+            IsGitm = 0
+        else:
+            header = read_routines.read_aether_header(args["filelist"])
+    
+    ## Read the file header
+    #if args['IsGitm']:
+    #    header = read_routines.read_gitm_headers(args["filelist"])
+    #else:
+    #    files = args["filelist"]
+    #    header = read_routines.read_aether_headers(files)
 
     # If help is requested for a specific file, return it here
     if args['help']:
@@ -198,7 +220,7 @@ def plot_model_results():
 
     for j, filename in enumerate(args['filelist']):
         # Read in the data file
-        if args['gitm']:
+        if IsGitm:
             data = read_routines.read_gitm_file(filename, plot_vars)
             ivar = args["var"]
         else:
@@ -206,8 +228,12 @@ def plot_model_results():
                 var_list = []
                 for pvar in plot_vars:
                     var_list.append(header["vars"][pvar])
-            data = read_routines.read_aether_file(filename, var_list)
-            ivar = 3
+            if (HasHeader):
+                data = read_routines.read_aether_one_binary_file(header, j, plot_vars)
+                ivar = args["var"]
+            else:
+                data = read_routines.read_aether_file(filename, var_list)
+                ivar = 3
 
         # For the first file, initialize the necessary plotting data
         if j == 0:

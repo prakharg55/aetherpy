@@ -177,9 +177,8 @@ def plot_model_results():
     IsGitm = args['IsGitm']
     HasHeader = args['HasHeader']
 
-
     if ((IsGitm) and (not HasHeader)):
-        header = read_routines.read_gitm_header(args["filelist"])
+        header = read_routines.read_gitm_headers(args["filelist"], finds = 0)
     else:
         if (HasHeader):
             header = read_routines.read_aether_ascii_header(args["filelist"])
@@ -284,8 +283,8 @@ def plot_model_results():
         mini = -maxi
 
     if args['cut'] == 'alt':
-        mask_north = ((y_pos > 45) & (y_pos < 90.0))
-        mask_south = ((y_pos < -45) & (y_pos > -90.0))
+        mask_north = ((y_pos >= 40) & (y_pos <= 90.0))
+        mask_south = ((y_pos <= -40) & (y_pos >= -90.0))
         plot_north = mask_north.max()
         plot_south = mask_south.max()
 
@@ -326,20 +325,26 @@ def plot_model_results():
                          tight_layout=True, figsize=(10, 8.5))
 
         gs1 = mpl.gridspec.GridSpec(nrows=2, ncols=2, wspace=0.0, hspace=0)
-        gs = mpl.gridspec.GridSpec(nrows=2, ncols=2, wspace=0.0, left=0.0,
-                                   right=0.9)
-        ax = fig.add_subplot(gs1[1, :2])
+        gs = mpl.gridspec.GridSpec(nrows=2, ncols=2, wspace=-0.05,
+                                   left=0.02, right=0.95,
+                                   top = 0.99, bottom = 0.05)
+        ax = fig.add_subplot(gs1[1, 0:2])
 
         # Plot the global data set (square plot at bottom if three plots):
-        con = ax.pcolor(x_pos, y_pos, all_2dim_data[itime].transpose(),
-                        vmin=mini, vmax=maxi, cmap=cmap)
+
+        dx = (x_pos[1] - x_pos[0])/2.0
+        xp = np.append(x_pos - dx, x_pos[-1:]+dx)
+        dy = (y_pos[1] - y_pos[0])/2.0
+        yp = np.append(y_pos - dy, y_pos[-1]+dy)
+        con = ax.pcolormesh(xp, yp, all_2dim_data[itime].transpose(),
+                        vmin=mini, vmax=maxi, cmap=cmap, shading='auto')
 
         # Add the winds, if desired
         if args["winds"]:
             ax.quiver(x_pos, y_pos, all_winds_x[itime].transpose(),
                       all_winds_y[itime].transpose())
-            ax.set_ylim([miny, maxy])
-            ax.set_xlim([minx, maxx])
+        ax.set_ylim([miny, maxy])
+        ax.set_xlim([minx, maxx])
 
         # Set the labels and aspect ratio
         ax.set_title("{:s}; {:s}: {:.2f} {:s}".format(
@@ -360,25 +365,47 @@ def plot_model_results():
         if args['cut'] == 'alt' and (plot_north or plot_south):
             # Set the common inputs
             shift = time_conversion.calc_time_shift(utime)
-            xlabels = ['', '12', '18', '00']
+
+            #xlabels = ['12', '18', '00']
+            #xlabelpos = [np.pi/2, np.pi, 3*np.pi/2]
+            xlabels = []
+            xlabelpos = []
             ylabels = [r'80$^\circ$', r'70$^\circ$', r'60$^\circ$',
                        r'50$^\circ$']
+
+            ylabelpos = [10.0, 20.0, 30.0, 40.0]
             xticks = np.arange(0, 2 * np.pi, np.pi / 2.0)
             yticks = np.arange(10, 50, 10)
 
             if plot_north:
                 # Top Left Graph Northern Hemisphere
                 ax2 = fig.add_subplot(gs[0, 0], projection='polar')
-                rad, theta = np.meshgrid(90.0 - y_pos[mask_north],
-                                         np.radians(x_pos + shift - 90.0))
-                conn = ax2.pcolor(theta, rad,
-                                  all_2dim_data[itime][:, mask_north],
-                                  vmin=mini_north, vmax=maxi_north, cmap=cmap)
+                yp = 90.0 - y_pos[mask_north]
+                dy = (int(100.0*(yp[1]-yp[0]))/100.0)/2.0
+                yp = np.append(yp - dy, yp[-1] + dy)
+                xp = np.radians(x_pos + shift - 90.0)
+                dx = (xp[1] - xp[0])/2
+                xp = np.append(xp - dx, xp[-1] + dx)
+                z = all_2dim_data[itime][:, mask_north].transpose()
+                conn = ax2.pcolormesh(xp, yp,
+                                      z,
+                                      shading = 'auto',
+                                      vmin=mini_north, vmax=maxi_north,
+                                      cmap=cmap)
+                ax2.set_xticks(xlabelpos)
                 ax2.set_xticklabels(xlabels)
+                ax2.text(-np.pi/2, 46.0, '00 LT',
+                         verticalalignment='top',
+                         horizontalalignment='center')
+                ax2.text(np.pi/2, 46.0, '12 LT',
+                         verticalalignment='bottom',
+                         horizontalalignment='center')
+                ax2.set_yticks(ylabelpos)
                 ax2.set_yticklabels(ylabels)
                 ax2.grid(linestyle=':', color='black')
                 ax2.set_xticks(xticks)
                 ax2.set_yticks(yticks)
+                ax2.set_ylim([0, 45])
                 fig.colorbar(conn, ax=ax2, shrink=0.5, pad=0.01)
 
             if plot_south:
@@ -386,14 +413,31 @@ def plot_model_results():
                 rad, theta = np.meshgrid(90.0 + y_pos[mask_south],
                                          np.radians(x_pos + shift - 90.0))
                 ax3 = fig.add_subplot(gs[0, 1], projection='polar')
-                cons = ax3.pcolor(theta, rad,
-                                  all_2dim_data[itime][:, mask_south],
+
+                yp = 90.0 + y_pos[mask_south]
+                dy = (int(100.0*(yp[1]-yp[0]))/100.0)/2.0
+                yp = np.append(yp - dy, yp[-1] + dy)
+                xp = np.radians(x_pos + shift - 90.0)
+                dx = (xp[1]-xp[0])/2.0
+                xp = np.append(xp - dx, xp[-1] + dx)
+                z = all_2dim_data[itime][:, mask_south].transpose()
+                cons = ax3.pcolormesh(xp, yp, z,
+                                  shading = 'auto',
                                   vmin=mini_south, vmax=maxi_south, cmap=cmap)
+                ax3.set_xticks(xlabelpos)
                 ax3.set_xticklabels(xlabels)
+                ax3.text(-np.pi/2, 46.0, '00 LT',
+                         verticalalignment='top',
+                         horizontalalignment='center')
+                ax3.text(np.pi/2, 46.0, '12 LT',
+                         verticalalignment='bottom',
+                         horizontalalignment='center')
+                ax3.set_yticks(ylabelpos)
                 ax3.set_yticklabels(ylabels)
                 ax3.grid(linestyle=':', color='black')
                 ax3.set_xticks(xticks)
                 ax3.set_yticks(yticks)
+                ax3.set_ylim([0, 45])
                 fig.colorbar(cons, ax=ax3, shrink=0.5, pad=0.01)
 
         # Format the output filename
@@ -402,6 +446,7 @@ def plot_model_results():
         outfile = img_file_fmt.format(fmt_input)
 
         # Save the output file
+        print("Writing file : ", outfile)
         fig.savefig(outfile)
         plt.close(fig)
 

@@ -266,8 +266,7 @@ def read_gitm_headers(filelist, finds=-1):
 
     # Ensure the filelist is array-like, allowing slicing of input
     file_list = np.asarray(filelist)
-    header['filename'] = list(file_list[finds])
-
+    header['filename'] = [file_list[finds]]
     for filename in header['filename']:
         # Read in the header from the binary file
         file_vars = list()
@@ -315,9 +314,10 @@ def read_gitm_headers(filelist, finds=-1):
             for ivar in range(num_vars):
                 vcode = unpack(end_char + '%is' % (rec_len),
                                fin.read(rec_len))[0]
-                file_vars.append(vcode.decode('utf-8').replace(" ", ""))
+                var = vcode.decode('utf-8').replace(" ", "")
+                file_vars.append(var)
                 _, rec_len = unpack(end_char + '2l', fin.read(8))
-
+                
             # Test the variable names
             if len(header["vars"]) == 0:
                 header["vars"] = list(file_vars)
@@ -326,7 +326,7 @@ def read_gitm_headers(filelist, finds=-1):
                                        'variables in file ', filename]))
 
             # Extract time
-            out_time = unpack(end_char + 'lllllll', fin.read(rec_len))
+            out_time = np.array(unpack(end_char + 'lllllll', fin.read(rec_len)))
             out_time[-1] *= 1000  # Convert from millisec to microsec
             header["time"].append(dt.datetime(*out_time))
 
@@ -427,15 +427,17 @@ def read_gitm_file(filename, file_vars=None):
 
         # Collect variable names in a list
         for ivar in range(num_vars):
-            data['vars'].append(unpack(end_char + '%is' % (rec_len),
-                                       fin.read(rec_len))[0])
-            _, rec_lec = unpack(end_char + '2l', fin.read(8))
+            vcode = unpack(end_char + '%is' % (rec_len),
+                           fin.read(rec_len))[0]
+            var = vcode.decode('utf-8').replace(" ", "")
+            data['vars'].append(var)
+            dummy, rec_lec = unpack(end_char + '2l', fin.read(8))
 
         # Extract time
-        rec_time = unpack(end_char + 'lllllll', fin.read(rec_len))
+        rec_time = np.array(unpack(end_char + 'lllllll', fin.read(28)))
         rec_time[-1] *= 1000  # convert from millisec to microsec
         data["time"] = dt.datetime(*rec_time)
-
+        
         # Header is this length:
         # Version + start/stop byte
         # nlons, nlats, nalts + start/stop byte

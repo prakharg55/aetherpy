@@ -1,13 +1,28 @@
 {
+    "keywords": [
+	"Aether", 
+	"AetherModel",
+	"space-physics",
+	"space-weather", 
+	"ionosphere", 
+	"thermosphere",
+	"forecasting",
+	"modeling", 
+	"modelling"
+    ],
     "creators": [
       {
-        "affiliation": "U.S. Naval Research Laboratory", 
-        "name": "Burrell, Angeline G.",
-        "orcid": "0000-0001-8875-9326"
+        "orcid": "0000-0001-8875-9326", 
+        "affiliation": "Naval Research Laboratory", 
+        "name": "Angeline G. Burrell"
       },
       {
         "affiliation": "University of Michigan", 
-        "name": "Ridley, Aaron",
+        "name": "Aaron Ridley"
       },
+      {
+        "affiliation": "University of Michigan", 
+        "name": "Qusai Al Shidi"
+      }
     ]
 }

@@ -150,9 +150,9 @@ def read_aether_ascii_header(filelist):
 
     """
 
-    header = {"nfiles": len(filelist), "version": 0.1,  "nlons": 0, "nlats": 0,
+    header = {"nfiles": len(filelist), "version": 0.1, "nlons": 0, "nlats": 0,
               "nalts": 0, "nblockslons": 0, "nblockslats": 0, "nblocksalts": 0,
-              "nvars": 0, "vars": [], "time": [], "filename": [] }
+              "nvars": 0, "vars": [], "time": [], "filename": []}
 
     for filename in filelist:
         header["filename"].append(filename)
@@ -186,7 +186,7 @@ def read_aether_ascii_header(filelist):
                     minute = int(fpin.readline())
                     second = int(fpin.readline())
                     msec = int(fpin.readline())
-                    header["time"].append(dt.datetime(year, month, day,  hour,
+                    header["time"].append(dt.datetime(year, month, day, hour,
                                                       minute, second, msec))
 
                 mvar = re.match(r'VARIABLE', line)

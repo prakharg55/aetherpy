@@ -336,7 +336,7 @@ def plot_model_results():
         dy = (y_pos[1] - y_pos[0]) / 2.0
         yp = np.append(y_pos - dy, y_pos[-1] + dy)
         con = ax.pcolormesh(xp, yp, all_2dim_data[itime].transpose(),
-                        vmin=mini, vmax=maxi, cmap=cmap, shading='auto')
+                            vmin=mini, vmax=maxi, cmap=cmap, shading='auto')
 
         # Add the winds, if desired
         if args["winds"]:

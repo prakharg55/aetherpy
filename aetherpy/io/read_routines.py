@@ -10,6 +10,7 @@ from struct import unpack
 import re
 
 from aetherpy.utils.time_conversion import epoch_to_datetime
+from aetherpy import logger
 
 
 def read_aether_headers(filelist, finds=-1):
@@ -225,7 +226,7 @@ def read_aether_one_binary_file(header, ifile, vars_to_read):
     """
 
     file_to_read = header["filename"][ifile]
-    print("Reading file : ", file_to_read)
+    logger.info("Reading file : ", file_to_read)
 
     data = {hkey: header[hkey] for hkey in ["version", "nlons", "nlats",
                                             "nalts" "nvars", "vars"]}

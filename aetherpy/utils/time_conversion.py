@@ -144,4 +144,4 @@ def calc_time_shift(utime):
         utime.second + utime.microsecond * 1.0e-6) / 60.0) / 60.0
     shift = uth * 15.0
 
-    return shift    
+    return shift

@@ -129,7 +129,7 @@ def read_aether_ascii_header(filelist):
     Parameters
     ----------
     filelist : list
-        A list of ascii header file names.  The number of files is recorded, 
+        A list of ascii header file names.  The number of files is recorded,
         but only the last file is used.
 
     Returns
@@ -164,7 +164,7 @@ def read_aether_ascii_header(filelist):
                     header["nblockslons"] = int(fpin.readline())
                     header["nblockslats"] = int(fpin.readline())
                     header["nblocksalts"] = int(fpin.readline())
-            
+
                 if re.match(r'NUMERICAL', line):
                     header["nvars"], _ = parse_line_into_int_and_string(
                         fpin.readline())
@@ -222,7 +222,7 @@ def read_aether_one_binary_file(header, ifile, vars_to_read):
     See Also
     --------
     read_aether_ascii_header
-    
+
     """
 
     file_to_read = header["filename"][ifile]
@@ -244,7 +244,7 @@ def read_aether_one_binary_file(header, ifile, vars_to_read):
             fin.seek(header_len + ivar * data_len)
             data[ivar] = np.array(unpack(endChar + '%if' % num_tot,
                                          fin.read(data_len)))
-            data[ivar] = data[ivar].reshape( 
+            data[ivar] = data[ivar].reshape(
                 (data["nlons"], data["nlats"], data["nalts"]), order="F")
     
     return data

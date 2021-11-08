@@ -1,24 +1,28 @@
 #!/usr/bin/env python
-""" Standard model visualization routines
-"""
+# Copyright 2020, the Aether Development Team (see doc/dev_team.md for members)
+# Full license can be found in License.md
+"""Standard model visualization routines."""
 
+from glob import glob
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import re
-from glob import glob
 
+from aetherpy import logger
 from aetherpy.io import read_routines
-from aetherpy.utils import inputs, time_conversion
-from aetherpy.plot import data_prep, movie_routines
+from aetherpy.plot import data_prep
+from aetherpy.plot import movie_routines
+from aetherpy.utils import inputs
+from aetherpy.utils import time_conversion
 
 
 # ----------------------------------------------------------------------------
 # Define the support routines
 
 def get_help(file_vars=None):
-    """ Provide string explaining how to run the command line interface
+    """Provide string explaining how to run the command line interface.
 
     Parameters
     ----------
@@ -36,24 +40,26 @@ def get_help(file_vars=None):
         os.path.commonpath([inputs.__file__, data_prep.__file__]),
         'run_plot_model_results.py') if __name__ == '__main__' else __name__
 
-    help_str = 'Usage:\n{:s} -[flags] [filenames]\n'.format(mname)
-    help_str += 'Flags:\n'
-    help_str += '       -help : print this message, include filename for '
-    help_str += 'variable names and indices\n'
-    help_str += '       -var=number : index of variable to plot\n'
-    help_str += '       -cut=alt, lat, or lon : which cut you would like\n'
-    help_str += '       -alt=number : alt in km or grid number (closest)\n'
-    help_str += '       -lat=number : latitude in degrees (closest)\n'
-    help_str += '       -lon=number: longitude in degrees (closest)\n'
-    help_str += '       -log : plot the log of the variable\n'
-    help_str += '       -winds : overplot winds\n'
-    help_str += '       -tec : plot the TEC variable\n'
-    help_str += '       -movie=number : provide a positive frame rate to '
-    help_str += 'create a movie\n'
-    help_str += '       -ext=str : figure or movie extension\n'
-    help_str += 'At end, list the files you want to plot. This code should '
-    help_str += 'work with either GITM files (*.bin) or Aether netCDF files '
-    help_str += '(*.nc)'
+    help_str = ''.join(['Usage:\n{:s} -[flags] [filenames]\n'.format(mname),
+                        'Flags:\n',
+                        '       -help : print this message, include filename ',
+                        'for variable names and indices\n',
+                        '       -var=number : index of variable to plot\n',
+                        '       -cut=alt, lat, or lon : which cut you would ',
+                        'like\n',
+                        '       -alt=number : alt in km or grid number ',
+                        '(closest)\n',
+                        '       -lat=number : latitude in degrees (closest)\n',
+                        '       -lon=number: longitude in degrees (closest)\n',
+                        '       -log : plot the log of the variable\n',
+                        '       -winds : overplot winds\n',
+                        '       -tec : plot the TEC variable\n',
+                        '       -movie=number : provide a positive frame rate',
+                        ' to create a movie\n',
+                        '       -ext=str : figure or movie extension\n',
+                        'At end, list the files you want to plot. This code ',
+                        'should work with either GITM files (*.bin) or Aether',
+                        ' netCDF files (*.nc)'])
 
     if file_vars is not None:
         help_str += "File Variables (index, name):\n"
@@ -64,7 +70,7 @@ def get_help(file_vars=None):
 
 
 def get_command_line_args(argv):
-    """ Parse the arguements and set to a dictionary
+    """Parse the arguements and set to a dictionary.
 
     Parameters
     ----------
@@ -85,18 +91,17 @@ def get_command_line_args(argv):
         log (flag to use log scale), and help (flag to display help)
 
     """
+
     # Initialize the arguments to their default values
     args = {'filelist': [], 'log': False, 'var': 15, 'alt': 400, 'tec': False,
             'lon': np.nan, 'lat': np.nan, 'cut': 'alt', 'winds': False,
-            'diff': False, 'IsGitm': False, 'HasHeader': False, 'movie': 0,
+            'diff': False, 'IsGitm': False, 'has_header': False, 'movie': 0,
             'ext': 'png'}
 
     arg_type = {'filelist': list, 'log': bool, 'var': int, 'alt': int,
-                'tec': bool,
-                'lon': float, 'lat': float, 'cut': str, 'help': bool,
-                'winds': bool, 'diff': bool, 'IsGitm': bool, 'HasHeader': bool,
-                'tec': bool,
-                'movie': int, 'ext': str}
+                'tec': bool, 'lon': float, 'lat': float, 'cut': str,
+                'help': bool, 'winds': bool, 'diff': bool, 'is_gitm': bool,
+                'has_header': bool, 'tec': bool, 'movie': int, 'ext': str}
 
     # If there is input, set default help to False
     args['help'] = False if len(argv) > 0 else True
@@ -140,17 +145,17 @@ def get_command_line_args(argv):
             # Save the filenames
             args['filelist'].append(arg)
 
-            m = re.match(r'(.*)bin',arg)
-            if m:
-                args['IsGitm'] = 1
-                args['HasHeader'] = 0
-                # check for a header file:
-                checkFile = glob(m.group(1)+"header")
-                if (len(checkFile) > 0):
-                    if (len(checkFile[0]) > 1):
-                        args['HasHeader'] = 1
+            if re.match(r'(.*)bin', arg):
+                args['IsGitm'] = True
+                args['has_header'] = False
+
+                # Check for a header file:
+                check_file = glob(m.group(1) + "header")
+                if len(check_file) > 0:
+                    if len(check_file[0]) > 1:
+                        args['has_header'] = True
             else:
-                args['IsGitm'] = 0
+                args['is_gitm'] = False
 
     # Update default movie extention for POSIX systems
     if args['movie'] > 0 and args['ext'] == 'png':
@@ -174,24 +179,17 @@ def plot_model_results():
         print(help_str)
         return
 
-    IsGitm = args['IsGitm']
-    HasHeader = args['HasHeader']
+    is_gitm = args['is_gitm']
+    has_header = args['has_header']
 
-    if ((IsGitm) and (not HasHeader)):
-        header = read_routines.read_gitm_headers(args["filelist"], finds = 0)
+    if is_gitm and not has_header:
+        header = read_routines.read_gitm_headers(args["filelist"], finds=0)
     else:
-        if (HasHeader):
+        if has_header:
             header = read_routines.read_aether_ascii_header(args["filelist"])
-            IsGitm = 0
+            is_gitm = False
         else:
             header = read_routines.read_aether_header(args["filelist"])
-    
-    ## Read the file header
-    #if args['IsGitm']:
-    #    header = read_routines.read_gitm_headers(args["filelist"])
-    #else:
-    #    files = args["filelist"]
-    #    header = read_routines.read_aether_headers(files)
 
     # If help is requested for a specific file, return it here
     if args['help']:
@@ -219,7 +217,7 @@ def plot_model_results():
 
     for j, filename in enumerate(args['filelist']):
         # Read in the data file
-        if IsGitm:
+        if is_gitm:
             data = read_routines.read_gitm_file(filename, plot_vars)
             ivar = args["var"]
         else:
@@ -227,8 +225,9 @@ def plot_model_results():
                 var_list = []
                 for pvar in plot_vars:
                     var_list.append(header["vars"][pvar])
-            if (HasHeader):
-                data = read_routines.read_aether_one_binary_file(header, j, plot_vars)
+            if has_header:
+                data = read_routines.read_aether_one_binary_file(header, j,
+                                                                 plot_vars)
                 ivar = args["var"]
             else:
                 data = read_routines.read_aether_file(filename, var_list)
@@ -254,7 +253,7 @@ def plot_model_results():
         else:
             all_2dim_data.append(data[ivar][cut_data])
 
-            if (args["winds"]):
+            if args["winds"]:
                 all_winds_x.append(data[plot_vars[-1]][cut_data])
                 all_winds_y.append(data[plot_vars[-1]][cut_data])
 
@@ -316,7 +315,7 @@ def plot_model_results():
     if args['movie'] > 0:
         img_file_fmt = movie_routines.setup_movie_dir(filename)
     else:
-        img_file_fmt = filename+'_{:}.'+args['ext']
+        img_file_fmt = ''.join([filename, '_{:}.', args['ext']])
 
     # Create a plot for each time
     for itime, utime in enumerate(all_times):
@@ -366,8 +365,6 @@ def plot_model_results():
             # Set the common inputs
             shift = time_conversion.calc_time_shift(utime)
 
-            #xlabels = ['12', '18', '00']
-            #xlabelpos = [np.pi/2, np.pi, 3*np.pi/2]
             xlabels = []
             xlabelpos = []
             ylabels = [r'80$^\circ$', r'70$^\circ$', r'60$^\circ$',
@@ -387,18 +384,13 @@ def plot_model_results():
                 dx = (xp[1] - xp[0])/2
                 xp = np.append(xp - dx, xp[-1] + dx)
                 z = all_2dim_data[itime][:, mask_north].transpose()
-                conn = ax2.pcolormesh(xp, yp,
-                                      z,
-                                      shading = 'auto',
-                                      vmin=mini_north, vmax=maxi_north,
-                                      cmap=cmap)
+                conn = ax2.pcolormesh(xp, yp, z, shading='auto', cmap=cmap,
+                                      vmin=mini_north, vmax=maxi_north)
                 ax2.set_xticks(xlabelpos)
                 ax2.set_xticklabels(xlabels)
-                ax2.text(-np.pi/2, 46.0, '00 LT',
-                         verticalalignment='top',
+                ax2.text(-np.pi / 2, 46.0, '00 LT', verticalalignment='top',
                          horizontalalignment='center')
-                ax2.text(np.pi/2, 46.0, '12 LT',
-                         verticalalignment='bottom',
+                ax2.text(np.pi / 2, 46.0, '12 LT', verticalalignment='bottom',
                          horizontalalignment='center')
                 ax2.set_yticks(ylabelpos)
                 ax2.set_yticklabels(ylabels)
@@ -415,22 +407,19 @@ def plot_model_results():
                 ax3 = fig.add_subplot(gs[0, 1], projection='polar')
 
                 yp = 90.0 + y_pos[mask_south]
-                dy = (int(100.0*(yp[1]-yp[0]))/100.0)/2.0
+                dy = (int(100.0 * (yp[1] - yp[0])) / 100.0) / 2.0
                 yp = np.append(yp - dy, yp[-1] + dy)
                 xp = np.radians(x_pos + shift - 90.0)
-                dx = (xp[1]-xp[0])/2.0
+                dx = (xp[1] - xp[0]) / 2.0
                 xp = np.append(xp - dx, xp[-1] + dx)
                 z = all_2dim_data[itime][:, mask_south].transpose()
-                cons = ax3.pcolormesh(xp, yp, z,
-                                  shading = 'auto',
-                                  vmin=mini_south, vmax=maxi_south, cmap=cmap)
+                cons = ax3.pcolormesh(xp, yp, z, shading = 'auto', cmap=cmap,
+                                      vmin=mini_south, vmax=maxi_south)
                 ax3.set_xticks(xlabelpos)
                 ax3.set_xticklabels(xlabels)
-                ax3.text(-np.pi/2, 46.0, '00 LT',
-                         verticalalignment='top',
+                ax3.text(-np.pi / 2, 46.0, '00 LT', verticalalignment='top',
                          horizontalalignment='center')
-                ax3.text(np.pi/2, 46.0, '12 LT',
-                         verticalalignment='bottom',
+                ax3.text(np.pi / 2, 46.0, '12 LT', verticalalignment='bottom',
                          horizontalalignment='center')
                 ax3.set_yticks(ylabelpos)
                 ax3.set_yticklabels(ylabels)
@@ -446,7 +435,7 @@ def plot_model_results():
         outfile = img_file_fmt.format(fmt_input)
 
         # Save the output file
-        print("Writing file : ", outfile)
+        logger.info("Writing file : ", outfile)
         fig.savefig(outfile)
         plt.close(fig)
 

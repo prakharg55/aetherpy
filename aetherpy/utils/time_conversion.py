@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # Copyright 2020, the Aether Development Team (see doc/dev_team.md for members)
 # Full license can be found in License.md
-"""Routines to perform temporal calculations
-"""
+"""Routines to perform temporal calculations."""
 
 import datetime as dt
 
 
 def epoch_to_datetime(epoch_time):
-    """Convert from epoch seconds to datetime
+    """Convert from epoch seconds to datetime.
 
     Parameters
     ----------
@@ -20,6 +19,10 @@ def epoch_to_datetime(epoch_time):
     dtime : dt.datetime
         Datetime object corresponding to `epoch_time`
 
+    Notes
+    -----
+    Epoch starts at 1 Jan 1965.
+
     """
 
     dtime = dt.datetime(1965, 1, 1) + dt.timedelta(seconds=epoch_time)
@@ -28,7 +31,7 @@ def epoch_to_datetime(epoch_time):
 
 
 def datetime_to_epoch(dtime):
-    """Convert datetime to epoch seconds
+    """Convert datetime to epoch seconds.
 
     Parameters
     ----------
@@ -71,16 +74,13 @@ def ut_to_lt(time_array, glon):
         For badly formatted input
 
     """
+
     time_array = np.asarray(time_array)
     glon = np.asarray(glon)
 
     # Get UT seconds of day
-    strg = "must be an array-like container of "
-    try:
-        utsec = [(ut.hour * 3600.0 + ut.minute * 60.0 + ut.second
-                  + ut.microsecond * 1.0e-6) / 3600.0 for ut in time_array]
-    except TypeError:
-        raise TypeError("{:s}datetime objects".format(strg))
+    utsec = [(ut.hour * 3600.0 + ut.minute * 60.0 + ut.second
+              + ut.microsecond * 1.0e-6) / 3600.0 for ut in time_array]
 
     # Determine if the calculation is paired or broadcasted
     if glon.shape == time_array.shape:
@@ -103,25 +103,29 @@ def lt_to_ut(lt, glon):
 
     Parameters
     ----------
-    lt : float
-        Local time in hours
-    glon : list/np.array of floats or float
-        Geographic longitude in degrees.
+    lt : float or array-like
+        Local time(s) in hours
+    glon : float or array-like
+        Geographic longitude(s) in degrees.
 
     Returns
     -------
-    uth : (float)
+    uth : float
         Universal time in hours
+
+    Notes
+    -----
+    If both `lt` and `glon` are array-like, they must be broadcastable.
 
     """
 
-    uth = lt - glon / 15.0
+    uth = lt - np.asarray(glon) / 15.0
 
     return uth
 
 
 def calc_time_shift(utime):
-    """ Calculate the time shift needed to oriennt a polar dial
+    """Calculate the time shift needed to orient a polar dial.
 
     Parameters
     ----------
@@ -134,11 +138,9 @@ def calc_time_shift(utime):
         Time shift in degrees
 
     """
-    uth = utime.hour + \
-        (utime.minute + \
-         (utime.second + utime.microsecond * 1.0e-6) / 60.0) / 60.0
+
+    uth = utime.hour + (utime.minute + (
+        utime.second + utime.microsecond * 1.0e-6) / 60.0) / 60.0
     shift = uth * 15.0
 
-    return shift
-
-    
+    return shift    

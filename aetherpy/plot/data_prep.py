@@ -67,7 +67,7 @@ def get_cut_index(lons, lats, alts, cut_val, cut_coord='alt'):
         else:
             # This is a data value, find the index closest to the data value
             icut = abs(alts - cut_val).argmin()
-            
+
             # Set a false limit near the top, 3 cells down
             if icut > alts.shape[0] - 3:
                 logger.warning(''.join(['Requested altitude slice is above ',

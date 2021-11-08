@@ -78,9 +78,10 @@ def get_cut_index(lons, lats, alts, cut_val, cut_coord='alt'):
         z_val = alts[icut]
         cut_data = (slice(0, lons.shape[0], 1), slice(0, lats.shape[0], 1),
                     icut)
+
     if cut_coord == 'lat':
         # Find closest value for latitude in between sensible limits
-        if cut_val < lats[1] or cut_val > lat[-2]:
+        if cut_val < lats[1] or cut_val > lats[-2]:
             logger.warning(''.join(['Requested latitude slice outside the',
                                     ' coordinate range, using midpoint']))
             icut = int(lats.shape[0] / 2)
@@ -90,6 +91,7 @@ def get_cut_index(lons, lats, alts, cut_val, cut_coord='alt'):
         z_val = lats[icut]
         cut_data = (slice(0, lons.shape[0], 1), icut,
                     slice(0, alts.shape[0], 1))
+
     if cut_coord == 'lon':
         # Find closest value for longitude in between sensible limits
         if cut_val < lons[1] or cut_val > lons[-2]:
@@ -119,7 +121,7 @@ def calc_tec(alt, ne, ialt_min=2, ialt_max=-4):
         Lowest altitude index to use (default=2)
     ialt_max : int
         Highest altitude index to use, may be negative (default=-4)
-    
+
     Returns
     -------
     tec : array-like

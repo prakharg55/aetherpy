@@ -145,12 +145,13 @@ def get_command_line_args(argv):
             # Save the filenames
             args['filelist'].append(arg)
 
-            if re.match(r'(.*)bin', arg):
+            match_bin = re.match(r'(.*)bin', arg)
+            if match_bin:
                 args['IsGitm'] = True
                 args['has_header'] = False
 
                 # Check for a header file:
-                check_file = glob(m.group(1) + "header")
+                check_file = glob(match_bin.group(1) + "header")
                 if len(check_file) > 0:
                     if len(check_file[0]) > 1:
                         args['has_header'] = True
@@ -159,7 +160,7 @@ def get_command_line_args(argv):
 
     # Update default movie extention for POSIX systems
     if args['movie'] > 0 and args['ext'] == 'png':
-        if (os.name == "posix"):
+        if os.name == "posix":
             args['ext'] = "mkv"
         else:
             args['ext'] = "mp4"
@@ -324,17 +325,16 @@ def plot_model_results():
                          tight_layout=True, figsize=(10, 8.5))
 
         gs1 = mpl.gridspec.GridSpec(nrows=2, ncols=2, wspace=0.0, hspace=0)
-        gs = mpl.gridspec.GridSpec(nrows=2, ncols=2, wspace=-0.05,
-                                   left=0.02, right=0.95,
-                                   top = 0.99, bottom = 0.05)
+        gs = mpl.gridspec.GridSpec(nrows=2, ncols=2, wspace=-0.05, left=0.02,
+                                   right=0.95, top=0.99, bottom=0.05)
         ax = fig.add_subplot(gs1[1, 0:2])
 
         # Plot the global data set (square plot at bottom if three plots):
 
-        dx = (x_pos[1] - x_pos[0])/2.0
-        xp = np.append(x_pos - dx, x_pos[-1:]+dx)
-        dy = (y_pos[1] - y_pos[0])/2.0
-        yp = np.append(y_pos - dy, y_pos[-1]+dy)
+        dx = (x_pos[1] - x_pos[0]) / 2.0
+        xp = np.append(x_pos - dx, x_pos[-1:] + dx)
+        dy = (y_pos[1] - y_pos[0]) / 2.0
+        yp = np.append(y_pos - dy, y_pos[-1] + dy)
         con = ax.pcolormesh(xp, yp, all_2dim_data[itime].transpose(),
                         vmin=mini, vmax=maxi, cmap=cmap, shading='auto')
 
@@ -378,10 +378,10 @@ def plot_model_results():
                 # Top Left Graph Northern Hemisphere
                 ax2 = fig.add_subplot(gs[0, 0], projection='polar')
                 yp = 90.0 - y_pos[mask_north]
-                dy = (int(100.0*(yp[1]-yp[0]))/100.0)/2.0
+                dy = (np.floor(100.0 * (yp[1] - yp[0])) / 100.0) / 2.0
                 yp = np.append(yp - dy, yp[-1] + dy)
                 xp = np.radians(x_pos + shift - 90.0)
-                dx = (xp[1] - xp[0])/2
+                dx = (xp[1] - xp[0]) / 2
                 xp = np.append(xp - dx, xp[-1] + dx)
                 z = all_2dim_data[itime][:, mask_north].transpose()
                 conn = ax2.pcolormesh(xp, yp, z, shading='auto', cmap=cmap,
@@ -413,7 +413,7 @@ def plot_model_results():
                 dx = (xp[1] - xp[0]) / 2.0
                 xp = np.append(xp - dx, xp[-1] + dx)
                 z = all_2dim_data[itime][:, mask_south].transpose()
-                cons = ax3.pcolormesh(xp, yp, z, shading = 'auto', cmap=cmap,
+                cons = ax3.pcolormesh(xp, yp, z, shading='auto', cmap=cmap,
                                       vmin=mini_south, vmax=maxi_south)
                 ax3.set_xticks(xlabelpos)
                 ax3.set_xticklabels(xlabels)

@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # Copyright 2020, the Aether Development Team (see doc/dev_team.md for members)
 # Full license can be found in License.md
-""" Utilities for handling command line inputs
-"""
+"""Utilities for handling command line inputs."""
 
 import sys
 
 
 def bool_string(line):
-    """ Determine whether a string should be True or False
+    """Determine whether a string should be True or False.
 
     Parameters
     ----------
@@ -46,26 +45,27 @@ def bool_string(line):
 
 
 def none_string(line):
-    """ Determine whether a string should be None
+    """Determine whether a string should be None.
 
     Parameters
     ----------
-    line : string
+    line : str
         Line to be tested
 
     Returns
     -------
-    out_line : string or NoneType
+    out_line : str or NoneType
         None if all-lowercase version of line is "none" or line is zero length.
-        Otherwise returns original value of line
+        Otherwise returns original value of line.
 
     """
+
     out_line = None if line.lower() == "none" or len(line) == 0 else line
     return out_line
 
 
 def process_command_line_input():
-    """ Process command line input, needed to possible ipython use
+    """Process command line input, needed to possible ipython use.
 
     Returns
     -------

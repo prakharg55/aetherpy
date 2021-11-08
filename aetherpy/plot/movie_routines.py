@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 # Copyright 2020, the Aether Development Team (see doc/dev_team.md for members)
 # Full license can be found in License.md
-""" Utilities for outputing movies
-"""
+"""Utilities for outputing movies."""
 
 from glob import glob
 import os
 
 
 def setup_movie_dir(movie_dir, overwrite=True):
-    """Set up a directory for movie files
+    """Set up a directory for movie files.
 
     Parameters
     ----------
@@ -24,7 +23,7 @@ def setup_movie_dir(movie_dir, overwrite=True):
         Image name formatting string
 
     """
-    
+
     # Test the output directory for existence and existing image files
     if os.path.isdir(movie_dir):
         oldfiles = glob(os.path.join(movie_dir, "image_????.png"))
@@ -45,7 +44,7 @@ def setup_movie_dir(movie_dir, overwrite=True):
 
 
 def save_movie(fileroot, ext='mp4', rate=30, overwrite=True):
-    """Save the output as a movie
+    """Save the output as a movie.
 
     Parameters
     ----------
@@ -66,7 +65,7 @@ def save_movie(fileroot, ext='mp4', rate=30, overwrite=True):
     # Construct the output filenames
     outfile = ".".join(fileroot, ext)
     image_files = os.path.join(fileroot, 'image_%04d.png')
-    
+
     # Test the output file
     if os.path.isfile(outfile):
         if overwrite:

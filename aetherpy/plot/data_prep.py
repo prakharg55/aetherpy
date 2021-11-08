@@ -131,12 +131,11 @@ def calc_tec(alt, ne, ialt_min=2, ialt_max=-4):
     TECU = 10^16 m^-2
 
     """
-    alt = np.asarray(alt)
-    ne = np.asarray(ne)
+    alts = np.asarray(alt)
+    nes = np.asarray(ne)
 
     # Initialize the TEC
-    tec = np.zeros(shape=ne[..., 0].shape())
-
+    tec = np.zeros(shape=nes[..., 0].shape())
 
     # Get the range of altitudes to cycle over
     if ialt_max < 0:
@@ -148,7 +147,8 @@ def calc_tec(alt, ne, ialt_min=2, ialt_max=-4):
     # Cycle through each altitude bin, summing the contribution from the
     # electron density
     for ialt in np.arange(ialt_min, ialt_max, 1):
-        tec += 1000.0 * ne[..., ialt] * (alts[ialt + 1] - alts[ialt - 1]) / 2.0
+        tec += 1000.0 * nes[..., ialt] * (alts[ialt + 1]
+                                          - alts[ialt - 1]) / 2.0
 
     # Convert TEC from per squared meters to TECU
     tec /= 1.0e16

@@ -246,7 +246,7 @@ def read_aether_one_binary_file(header, ifile, vars_to_read):
                                          fin.read(data_len)))
             data[ivar] = data[ivar].reshape(
                 (data["nlons"], data["nlats"], data["nalts"]), order="F")
-    
+
     return data
 
 

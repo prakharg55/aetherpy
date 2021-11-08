@@ -4,6 +4,7 @@
 """Routines to perform temporal calculations."""
 
 import datetime as dt
+import numpy as np
 
 
 def epoch_to_datetime(epoch_time):

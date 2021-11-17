@@ -7,6 +7,31 @@ Code
 Please read the [standards document](doc/design/standards) before
 contributing.
 
+### Setup
+
+If you wish to contribute please start with checking out the `develop` branch
+from your fork (you only need a fork if you don't have developer access to this
+repository).
+
+```sh
+git clone <url to your fork here>
+git checkout develop
+```
+
+Once you make your changes you can either test locally by importing `aetherpy`
+into `ipython`:
+
+```python
+# assuming you are in the root directory of aetherpy
+import aetherpy
+```
+
+Or you may install it to test how it may work globally while you continue to develop the code:
+
+```python
+python setup.py develop --user
+```
+
 ### Development
 
 Make new branches for features `git checkout -b my_feature` and commit often

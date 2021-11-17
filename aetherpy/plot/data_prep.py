@@ -67,7 +67,7 @@ def get_cut_index(lons, lats, alts, cut_val, cut_coord='alt'):
         else:
             # This is a data value, find the index closest to the data value
             icut = abs(alts - cut_val).argmin()
-            
+
             # Set a false limit near the top, 3 cells down
             if icut > alts.shape[0] - 3:
                 logger.warning(''.join(['Requested altitude slice is above ',
@@ -78,9 +78,10 @@ def get_cut_index(lons, lats, alts, cut_val, cut_coord='alt'):
         z_val = alts[icut]
         cut_data = (slice(0, lons.shape[0], 1), slice(0, lats.shape[0], 1),
                     icut)
+
     if cut_coord == 'lat':
         # Find closest value for latitude in between sensible limits
-        if cut_val < lats[1] or cut_val > lat[-2]:
+        if cut_val < lats[1] or cut_val > lats[-2]:
             logger.warning(''.join(['Requested latitude slice outside the',
                                     ' coordinate range, using midpoint']))
             icut = int(lats.shape[0] / 2)
@@ -90,6 +91,7 @@ def get_cut_index(lons, lats, alts, cut_val, cut_coord='alt'):
         z_val = lats[icut]
         cut_data = (slice(0, lons.shape[0], 1), icut,
                     slice(0, alts.shape[0], 1))
+
     if cut_coord == 'lon':
         # Find closest value for longitude in between sensible limits
         if cut_val < lons[1] or cut_val > lons[-2]:
@@ -119,7 +121,7 @@ def calc_tec(alt, ne, ialt_min=2, ialt_max=-4):
         Lowest altitude index to use (default=2)
     ialt_max : int
         Highest altitude index to use, may be negative (default=-4)
-    
+
     Returns
     -------
     tec : array-like
@@ -131,12 +133,11 @@ def calc_tec(alt, ne, ialt_min=2, ialt_max=-4):
     TECU = 10^16 m^-2
 
     """
-    alt = np.asarray(alt)
-    ne = np.asarray(ne)
+    alts = np.asarray(alt)
+    nes = np.asarray(ne)
 
     # Initialize the TEC
-    tec = np.zeros(shape=ne[..., 0].shape())
-
+    tec = np.zeros(shape=nes[..., 0].shape())
 
     # Get the range of altitudes to cycle over
     if ialt_max < 0:
@@ -148,7 +149,8 @@ def calc_tec(alt, ne, ialt_min=2, ialt_max=-4):
     # Cycle through each altitude bin, summing the contribution from the
     # electron density
     for ialt in np.arange(ialt_min, ialt_max, 1):
-        tec += 1000.0 * ne[..., ialt] * (alts[ialt + 1] - alts[ialt - 1]) / 2.0
+        tec += 1000.0 * nes[..., ialt] * (alts[ialt + 1]
+                                          - alts[ialt - 1]) / 2.0
 
     # Convert TEC from per squared meters to TECU
     tec /= 1.0e16

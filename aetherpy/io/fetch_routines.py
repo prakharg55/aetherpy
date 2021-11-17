@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # Copyright 2020, the Aether Development Team (see doc/dev_team.md for members)
 # Full license can be found in License.md
-"""Routines to find and retrieve files
-"""
+"""Routines to find and retrieve files."""
 
 from glob import glob
 import os
@@ -11,7 +10,7 @@ from aetherpy import logger
 
 
 def get_gitm_filelist(file_dir):
-    """Get a list of GITM files from a specified directory
+    """Get a list of GITM files from a specified directory.
 
     Parameters
     ----------

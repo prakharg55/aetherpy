@@ -47,3 +47,11 @@ jobs:
 
     - name: Evaluate complexity
       run: flake8 . --count --exit-zero --max-complexity=10 --statistics
+
+    - name: Test with pytest
+      run: pytest --cov=aetherpy/
+
+    - name: Publish results to coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: coveralls --rcfile=setup.cfg --service=github

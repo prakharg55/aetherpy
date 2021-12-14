@@ -1,5 +1,6 @@
 coveralls
-numpydoc
 flake8
+numpydoc
+pytest
 sphinx
 sphinx_rtd_theme

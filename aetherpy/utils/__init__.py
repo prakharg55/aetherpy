@@ -5,4 +5,4 @@
 
 
 from aetherpy.utils import inputs
-from aetherpy.untils import time_conversion
+from aetherpy.utils import time_conversion

@@ -2,5 +2,6 @@ coveralls
 flake8
 numpydoc
 pytest
+pytest-cov
 sphinx
 sphinx_rtd_theme

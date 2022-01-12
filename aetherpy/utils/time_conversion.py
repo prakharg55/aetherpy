@@ -120,7 +120,11 @@ def lt_to_ut(lt, glon):
 
     """
 
-    uth = lt - np.asarray(glon) / 15.0
+    uth = np.asarray(lt) - np.asarray(glon) / 15.0
+
+    # Ensure the values range from 0-24 h
+    uth[uth <= 0] += 24.0
+    uth[uth >= 24.0] -= 24.0
 
     return uth
 

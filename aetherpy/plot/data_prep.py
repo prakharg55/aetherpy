@@ -108,7 +108,7 @@ def get_cut_index(lons, lats, alts, cut_val, isgrid=False, cut_coord='alt'):
 
 
 def calc_tec(alt, ne, ialt_min=2, ialt_max=-4):
-    """Calculate the TEC for the specified altitude range from electron density
+    """Calculate TEC for the specified altitude range from electron density.
 
     Parameters
     ----------
@@ -129,7 +129,12 @@ def calc_tec(alt, ne, ialt_min=2, ialt_max=-4):
     Notes
     -----
     TEC = Total Electron Content
-    TECU = 10^16 m^-2
+    TECU = 10^16 m^-2 (TEC Units)
+
+    Raises
+    ------
+    ValueError
+        If the altitude integration range is poorly defined.
 
     """
     alts = np.asarray(alt)

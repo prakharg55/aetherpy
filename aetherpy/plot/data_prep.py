@@ -9,8 +9,8 @@ import numpy as np
 from aetherpy import logger
 
 
-def get_cut_index(lons, lats, alts, cut_val, cut_coord='alt'):
-    """ Get the cut index needed to obtain a slice in the remaining two coords
+def get_cut_index(lons, lats, alts, cut_val, isgrid=False, cut_coord='alt'):
+    """Select indices needed to obtain a slice in the remaining two coords.
 
     Parameters
     ----------
@@ -21,7 +21,10 @@ def get_cut_index(lons, lats, alts, cut_val, cut_coord='alt'):
     alts : array-like
         1D array of altitudes in km
     cut_val : int or float
-        Data value or grid number (alt only) along which icut will be set
+        Data value or grid number along that will be held constant
+    isgrid : bool
+        Flag that indicates `cut_val` is a grid index if True or that it is a
+        data value if False (default=False)
     cut_coord : str
         Expects one of 'lat', 'lon', or 'alt' and will return an index for
         that data, allowing a 2D slice to be created along other two
@@ -44,66 +47,62 @@ def get_cut_index(lons, lats, alts, cut_val, cut_coord='alt'):
     -----
     `lons`, `lats`, and `alts` do not need to be the same shape
 
+    Raises
+    ------
+    ValueError
+        If `cut_val` is outside the possible range of values
+
     """
     # Ensure inputs are array-like
     lons = np.asarray(lons)
     lats = np.asarray(lats)
     alts = np.asarray(alts)
 
-    # Set the x and y coordinates
+    # Initialize the output slices
+    out_slice = {"lon": slice(0, lons.shape[0], 1),
+                 "lat": slice(0, lats.shape[0], 1),
+                 "alt": slice(0, alts.shape[0], 1)}
+
+    # Set the x, y, and z coordinates
     x_coord = lons if cut_coord in ['alt', 'lat'] else lats
     y_coord = alts if cut_coord in ['lat', 'lon'] else lats
 
     if cut_coord == 'alt':
-        if cut_val < 50:
-            # The model doesn't go this low, it must be a grid value
-            if len(alts) <= 1 and cut_val != 0:
-                logger.warning(''.join(['Requested altitude slice ',
-                                        '{:d}'.format(cut_val),
-                                        ' is absent, using 0']))
-                icut = 0
-            else:
-                icut = cut_val
+        z_coord = alts
+    else:
+        if cut_coord == 'lat':
+            z_coord = lats
         else:
-            # This is a data value, find the index closest to the data value
-            icut = abs(alts - cut_val).argmin()
+            z_coord = lons
 
-            # Set a false limit near the top, 3 cells down
-            if icut > alts.shape[0] - 3:
-                logger.warning(''.join(['Requested altitude slice is above ',
-                                        'the recommended upper limit, setting',
-                                        ' to recommended upper limit']))
-                icut = alts.shape[0] - 3
+    # Find the desired index for the z-coordinate value
+    if isgrid:
+        icut = cut_val
+    else:
+        if cut_val < z_coord.min() or cut_val > z_coord.max():
+            raise ValueError('Requested cut is outside the coordiante range')
 
-        z_val = alts[icut]
-        cut_data = (slice(0, lons.shape[0], 1), slice(0, lats.shape[0], 1),
-                    icut)
+        icut = abs(z_coord - cut_val).argmin()
 
-    if cut_coord == 'lat':
-        # Find closest value for latitude in between sensible limits
-        if cut_val < lats[1] or cut_val > lats[-2]:
-            logger.warning(''.join(['Requested latitude slice outside the',
-                                    ' coordinate range, using midpoint']))
-            icut = int(lats.shape[0] / 2)
-        else:
-            icut = abs(lats - cut_val).argmin()
+    # Get the z-value if possible.
+    if icut < 0 or icut >= len(z_coord):
+        raise ValueError('Requested cut is outside the index range')
 
-        z_val = lats[icut]
-        cut_data = (slice(0, lons.shape[0], 1), icut,
-                    slice(0, alts.shape[0], 1))
+    # Warn the user if they selected a suspect index
+    if cut_coord == "alt":
+        if icut > len(z_coord) - 3:
+            logger.warning(''.join(['Requested altitude slice is above ',
+                                    'the recommended upper limit']))
+    else:
+        if icut == 0 or icut == len(z_coord) - 1:
+            logger.warning(''.join(['Requested ', cut_coord ,' slice is ',
+                                    'beyond the recommended limits']))
 
-    if cut_coord == 'lon':
-        # Find closest value for longitude in between sensible limits
-        if cut_val < lons[1] or cut_val > lons[-2]:
-            logger.warning(''.join(['Requested longitude slice outside the',
-                                    ' coordinate range, using midpoint']))
-            icut = int(lons.shape[0] / 2)
-        else:
-            icut = abs(lons - cut_val).argmin()
+    z_val = z_coord[icut]
 
-        z_val = lons[icut]
-        cut_data = (icut, slice(0, lats.shape[0], 1),
-                    slice(0, alts.shape[0], 1))
+    # Finalize the slicing tuple
+    out_slice[cut_coord] = icut
+    cut_data = tuple([out_slice[coord] for coord in ['lon', 'lat', 'alt']])
 
     return icut, cut_data, x_coord, y_coord, z_val
 

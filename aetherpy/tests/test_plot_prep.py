@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Copyright 2021, the Aether Development Team (see doc/dev_team.md for members)
 # Full license can be found in License.md
-"""Unit tests for input utilities."""
+"""Unit tests for plot data preparation utilities."""
 
 import logging
 import numpy as np
@@ -10,8 +10,8 @@ import pytest
 from aetherpy.plot import data_prep
 
 
-class TestSlice(object):
-    """Unit tests for slicing functions."""
+class TestDataPrep(object):
+    """Unit tests for data preparation functions."""
 
     def setup(self):
         """Initialize clean test environment."""
@@ -71,7 +71,7 @@ class TestSlice(object):
             else:
                 assert out[-1] == self.in_coords[coord][out[1][i]], \
                     "unexpected {:s} value".format(coord)
-        
+
         return
 
     @pytest.mark.parametrize("cut_val", [-1, 400])
@@ -168,7 +168,59 @@ class TestSlice(object):
         # Test the logger warning message
         captured = caplog.text
         if cut_coord == "alt":
-             assert captured.find("Requested altitude slice is above the") >= 0
+            assert captured.find("Requested altitude slice is above the") >= 0
         else:
             assert captured.find("beyond the recommended limits") >= 0
+        return
+
+    @pytest.mark.parametrize("in_kwargs", [{"ialt_min": 10}, {},
+                                           {"ialt_max": 10},
+                                           {"ialt_min": 0, "ialt_max": -1}])
+    def test_calc_tec(self, in_kwargs):
+        """Test successful TEC calculation.
+
+        Parameters
+        ----------
+        in_kwargs : dict
+            Function kwargs
+
+        """
+
+        # Initialize local data
+        ne = np.ones(shape=(self.in_coords['lon'].shape[0],
+                            self.in_coords['lat'].shape[0],
+                            self.in_coords['alt'].shape[0]), dtype=float)
+
+        # Calculate the TEC
+        tec = data_prep.calc_tec(self.in_coords['alt'], ne, **in_kwargs)
+
+        # Test the output
+        assert len(np.unique(tec)) == 1
+        assert tec.shape == (self.in_coords['lon'].shape[0],
+                             self.in_coords['lat'].shape[0])
+        assert tec.min() >= 0.0
+        return
+
+    @pytest.mark.parametrize("in_kwargs", [{"ialt_min": -1}, {"ialt_max": 0},
+                                           {"ialt_min": 10, "ialt_max": 10}])
+    def test_calc_tec_bad_index(self, in_kwargs):
+        """Test TEC calculation raises ValueError with bad alt index range.
+
+        Parameters
+        ----------
+        in_kwargs : dict
+            Function kwargs
+
+        """
+
+        # Initialize local data
+        ne = np.ones(shape=(self.in_coords['lon'].shape[0],
+                            self.in_coords['lat'].shape[0],
+                            self.in_coords['alt'].shape[0]), dtype=float)
+
+        # Calculate the TEC
+        with pytest.raises(ValueError) as verr:
+            data_prep.calc_tec(self.in_coords['alt'], ne, **in_kwargs)
+
+        assert str(verr).find("ialt_max` must be greater than `ialt_min") >= 0
         return

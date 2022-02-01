@@ -117,7 +117,7 @@ def calc_tec(alt, ne, ialt_min=2, ialt_max=-4):
     ne : array-like
         Electron density in cubic meters, with altitude as the last axis
     ialt_min : int
-        Lowest altitude index to use (default=2)
+        Lowest altitude index to use, may be negative (default=2)
     ialt_max : int
         Highest altitude index to use, may be negative (default=-4)
 
@@ -141,11 +141,14 @@ def calc_tec(alt, ne, ialt_min=2, ialt_max=-4):
     nes = np.asarray(ne)
 
     # Initialize the TEC
-    tec = np.zeros(shape=nes[..., 0].shape())
+    tec = np.zeros(shape=nes[..., 0].shape)
 
     # Get the range of altitudes to cycle over
     if ialt_max < 0:
         ialt_max += alt.shape[0]
+
+    if ialt_min < 0:
+        ialt_min += alt.shape[0]
 
     if ialt_max <= ialt_min:
         raise ValueError('`ialt_max` must be greater than `ialt_min`')

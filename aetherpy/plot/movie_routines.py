@@ -49,7 +49,7 @@ def setup_movie_dir(movie_dir, file_glob="image_????.png", overwrite=True):
     # Create the movie image naming string based on the `file_glob` variable
     file_base, file_ext = os.path.splitext(file_glob)
     dnum = len(file_base.split('?')) - 1 + 4 * (len(file_base.split("*")) - 1)
-    file_pre = re.split('\W+', file_base)[0]
+    file_pre = re.split(r"\W", file_base)[0]
     img_names = os.path.join(movie_dir, "".join([
         file_base, "_%0", "{:d}".format(dnum), "d", file_ext]))
 

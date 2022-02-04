@@ -11,8 +11,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ["3.8", "3.9"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.8", "3.9", "3.10"]
         numpy_ver: ["latest"]
         include:
           - python-version: "3.7"
@@ -47,3 +47,11 @@ jobs:
 
     - name: Evaluate complexity
       run: flake8 . --count --exit-zero --max-complexity=10 --statistics
+
+    - name: Test with pytest
+      run: pytest --cov=aetherpy/
+
+    - name: Publish results to coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: coveralls --rcfile=setup.cfg --service=github

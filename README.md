@@ -1,28 +1,56 @@
 # aetherpy
-Python package that supports Aether analysis
+[![Coverage Status](https://coveralls.io/repos/github/AetherModel/aetherpy/badge.svg?branch=main)](https://coveralls.io/github/AetherModel/aetherpy?branch=main)
 
-To use:
+The Python package that supports Aether model data management and analysis.
 
+# Installation
+
+## Starting from scratch
+* Python and the packages aetherpy depends on are freely available. Python may
+  be obtained through various package managers or from https://www.python.org/.
+  A common OS-independent Python package manager to obtain the aetherpy
+  dependencies is [PyPi](https://pypi.org/).
+
+## Installation from GitHub
+
+```
 git clone https://github.com/AetherModel/aetherpy
-
 cd aetherpy
+python setup.py install
+```
 
-git checkout develop
+If you want to install aetherpy for the entire system, you will need to add
+`sudo` in front of the final command in the above block.  To install for
+yourself without root priveledges, append `--user` to the end of the final
+command.
 
-sudo python setup.py install
+## Installation from PyPi
 
-cp aetherpy/run_plot_model_results.py [to_someplace_in_your_PATH]
+Pip installation will soon be available
 
-then you should be able to do something like:
+## Installation for development
 
-run_plot_model_results.py -var=3 -alt=120 3DALL*.bin
+If you intend to contribute to the testing or development of aetherpy, you will
+need to install in develop mode:
 
-from whatever directory you have files. You can see the help by typing:
+```
+python setup.py develop
+```
 
-run_plot_model_results.py -h
+This allows you to change branches to the desired test brach or alter files
+without needing to re-install aetherpy.
 
-If you want do development, then you can edit the original files in the aetherpy directories (io, plot, utils).  You can then git commit things.  But, in order to actually use the changes that you implemented in the original files, you have to go into the aetherpy base directory, and then do:
+# Getting Started
 
-sudo python setup.py install
+aetherpy contains a test script to plot model results.  It may be called via:
 
-again.  This overwrites the files in the system directory so when you run the codes again, you will se your changes implemented.
+```
+python aetherpy/run_plot_model_results.py var=3 -alt=120 [file_dir]/3DALL*.bin
+```
+
+where [file_dir] is the directory where you have Aether model output files. You
+can see the help by typing:
+
+```
+python aetherpy/run_plot_model_results.py -h
+```

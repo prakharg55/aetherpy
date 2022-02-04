@@ -70,7 +70,7 @@ def process_command_line_input():
     Returns
     -------
     input_args : list
-        List of input arguements
+        List of input arguments
 
     """
 

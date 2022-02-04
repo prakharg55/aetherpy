@@ -6,14 +6,14 @@
 import logging
 import os
 
+# Define a logger object to allow easier log handling
+logging.raiseExceptions = False
+logger = logging.getLogger('aetherpy_logger')
+
 # Import the sub-modules
 from aetherpy import io
 from aetherpy import plot
 from aetherpy import utils
-
-# Define a logger object to allow easier log handling
-logging.raiseExceptions = False
-logger = logging.getLogger('aetherpy_logger')
 
 # Define global variables
 vfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'version.txt')

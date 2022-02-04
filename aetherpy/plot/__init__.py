@@ -4,4 +4,4 @@
 """Utilities to plot model output as figures or movies."""
 
 from aetherpy.plot import data_prep
-from atherpy.plot import movie_routines
+from aetherpy.plot import movie_routines

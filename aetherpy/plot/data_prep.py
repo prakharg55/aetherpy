@@ -95,7 +95,7 @@ def get_cut_index(lons, lats, alts, cut_val, isgrid=False, cut_coord='alt'):
                                     'the recommended upper limit']))
     else:
         if icut == 0 or icut == len(z_coord) - 1:
-            logger.warning(''.join(['Requested ', cut_coord ,' slice is ',
+            logger.warning(''.join(['Requested ', cut_coord, ' slice is ',
                                     'beyond the recommended limits']))
 
     z_val = z_coord[icut]

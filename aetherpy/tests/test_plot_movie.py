@@ -106,6 +106,7 @@ class TestMovie(object):
         for filename in self.tempfiles:
             assert not os.path.isfile(filename), "old file not removed"
 
+        assert img_names.find(self.movie_dir) >= 0, "unexpected dest directory"
         assert img_names.find(self.filebase) >= 0, "unexpected file prefix"
         assert img_names.find(self.fileext) >= 0, "unexpected file extension"
         return
@@ -187,7 +188,7 @@ class TestMovie(object):
         # Create the move file
         with pytest.raises(IOError) as ierr:
             mr.save_movie(self.movie_dir, movie_name=self.moviename,
-                                image_files=image_files, overwrite=False)
+                          image_files=image_files, overwrite=False)
 
         # Test the output
         assert str(ierr).find('already exists') >= 0, "unexpected IOError"

@@ -51,7 +51,7 @@ def setup_movie_dir(movie_dir, file_glob="image_????.png", overwrite=True):
     dnum = len(file_base.split('?')) - 1 + 4 * (len(file_base.split("*")) - 1)
     file_pre = re.split(r"\W", file_base)[0]
     img_names = os.path.join(movie_dir, "".join([
-        file_base, "_%0", "{:d}".format(dnum), "d", file_ext]))
+        file_pre, "_%0", "{:d}".format(dnum), "d", file_ext]))
 
     return img_names
 

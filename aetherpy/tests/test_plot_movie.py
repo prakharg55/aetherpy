@@ -13,6 +13,29 @@ import tempfile
 from aetherpy.plot import movie_routines as mr
 
 
+def sys_agnostic_rename(inname, outname, max_attemps=100):
+    """Wrap os.rename, Windows OS sometimes needs time to allow rename to work.
+
+    Parameters
+    ----------
+    inname : str
+        Input filename or directory
+    outname : str
+        Output filename or directory
+    max_attemps : int
+        Maximum rename attemps (default=100)
+
+    """
+    for retry in range(max_attemps):
+        try:
+            os.rename(inname, outname)
+            break
+        except Exception:
+            pass
+
+    return
+
+
 class TestMovie(object):
     """Unit tests for plot-to-movie functions."""
 
@@ -79,12 +102,7 @@ class TestMovie(object):
                 self.filebase, i, self.fileext))
 
             # Windows OS sometimes needs time to allow a rename
-            for retry in range(100):
-                try:
-                    os.rename(out[1], goodname)
-                    break
-                except Exception:
-                    pass
+            sys_agnostic_rename(out[1], goodname)
 
             # Add data to the temporary file
             if data:
@@ -175,7 +193,8 @@ class TestMovie(object):
         # Make an output file with the same name as the movie file
         out = tempfile.mkstemp(suffix=self.fileext, prefix=self.filebase,
                                dir=self.movie_dir)
-        os.rename(out[1], os.path.join(self.movie_dir, self.moviename))
+        sys_agnostic_rename(out[1],
+                            os.path.join(self.movie_dir, self.moviename))
 
         # Create the move file
         outfile = mr.save_movie(self.movie_dir, movie_name=self.moviename,
@@ -199,7 +218,7 @@ class TestMovie(object):
         out = tempfile.mkstemp(suffix=self.fileext, prefix=self.filebase,
                                dir=self.movie_dir)
         outfile = os.path.join(self.movie_dir, self.moviename)
-        os.rename(out[1], outfile)
+        sys_agnostic_rename(out[1], outfile)
 
         # Create the move file
         with pytest.raises(IOError) as ierr:

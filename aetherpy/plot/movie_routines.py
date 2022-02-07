@@ -19,7 +19,9 @@ def setup_movie_dir(movie_dir, file_glob="image_????.png", overwrite=True):
         Base filename without directory, using wildcards to identify potential
         images that would be included in the movie (default='image_????.png')
     overwrite : bool
-        Overwrite an existing movie of the same name (default=True)
+        Overwrite an existing movie of the same name. Windows OS frequently do
+        not allow Python to remove files, so Windows users must clean up these
+        files themselves. (default=True)
 
     Returns
     -------
@@ -76,7 +78,9 @@ def save_movie(movie_dir, movie_name="movie.mp4", image_files="image_%04d.png",
     rate : int
         Movie frame rate (default=30)
     overwrite : bool
-        Overwrite an existing movie of the same name (default=True)
+        Overwrite an existing movie of the same name. Windows OS frequently do
+        not allow Python to remove files, so Windows users must clean up these
+        files themselves. (default=True)
 
     Returns
     -------
@@ -86,7 +90,7 @@ def save_movie(movie_dir, movie_name="movie.mp4", image_files="image_%04d.png",
     Raises
     ------
     IOError
-        If movie file already exists and `overwrite` is False
+        If movie file already exists and `overwrite` is False.
 
     Notes
     -----

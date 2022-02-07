@@ -211,6 +211,8 @@ class TestMovie(object):
         self.tempfiles.append(outfile)
         return
 
+    @pytest.mark.skipif(sys.platform in ['win32', 'cygwin', 'windows'],
+                        reason="Windows create the test file")
     def test_save_movie_overwrite_blocking(self):
         """Test raises IOError when a movie exists and overwrite is blocked."""
         # Set up the movie file directory
@@ -223,8 +225,8 @@ class TestMovie(object):
                                dir=self.movie_dir)
         outfile = os.path.join(self.movie_dir, self.moviename)
         sys_agnostic_rename(out[1], outfile)
-        assert os.path.isfile(outfile), "Unable to create file on {:}".format(
-            sys.platform)
+        assert os.path.isfile(outfile), \
+            "Unable to create file {:} on {:}".format(outfile, sys.platform)
 
         # Create the move file
         with pytest.raises(IOError) as ierr:

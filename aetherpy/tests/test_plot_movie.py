@@ -122,6 +122,8 @@ class TestMovie(object):
 
         return
 
+    @pytest.mark.skipif(sys.platform == "windows",
+                        reason="Windows can't remove directories")
     @pytest.mark.parametrize("wcard", ["*", "????"])
     def test_setup_movie_dir_olddir(self, wcard):
         """Test sucessful creation of a new directory for movie files.
@@ -183,6 +185,8 @@ class TestMovie(object):
         self.tempfiles.append(outfile)
         return
 
+    @pytest.mark.skipif(sys.platform == "windows",
+                        reason="Windows can't remove directories")
     def test_save_movie_overwrite_success(self):
         """Test the creation of a movie file when overwriting the old movie."""
         # Set up the movie file directory

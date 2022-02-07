@@ -122,7 +122,7 @@ class TestMovie(object):
 
         return
 
-    @pytest.mark.skipif(sys.platform == "windows",
+    @pytest.mark.skipif(sys.platform in ["win32", "cygwin", "windows"],
                         reason="Windows can't remove directories")
     @pytest.mark.parametrize("wcard", ["*", "????"])
     def test_setup_movie_dir_olddir(self, wcard):
@@ -185,7 +185,7 @@ class TestMovie(object):
         self.tempfiles.append(outfile)
         return
 
-    @pytest.mark.skipif(sys.platform == "windows",
+    @pytest.mark.skipif(sys.platform in ['win32', 'cygwin', 'windows'],
                         reason="Windows can't remove directories")
     def test_save_movie_overwrite_success(self):
         """Test the creation of a movie file when overwriting the old movie."""
@@ -223,6 +223,8 @@ class TestMovie(object):
                                dir=self.movie_dir)
         outfile = os.path.join(self.movie_dir, self.moviename)
         sys_agnostic_rename(out[1], outfile)
+        assert os.path.isfile(outfile), "Unable to create file on {:}".format(
+            sys.platform)
 
         # Create the move file
         with pytest.raises(IOError) as ierr:

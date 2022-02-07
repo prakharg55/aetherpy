@@ -68,7 +68,14 @@ class TestMovie(object):
             # Rename the temporary file to match the necessary format
             goodname = os.path.join(self.movie_dir, "{:s}{:04d}{:s}".format(
                 self.filebase, i, self.fileext))
-            os.rename(out[1], goodname)
+
+            # Windows OS sometimes needs time to allow a rename
+            for retry in range(100):
+                try:
+                    os.rename(out[1], goodname)
+                    break
+                except Exception:
+                    pass
 
             # Add data to the temporary file
             if data:

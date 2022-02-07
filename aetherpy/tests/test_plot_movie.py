@@ -21,6 +21,7 @@ class TestMovie(object):
 
         # Create a temporary directory
         tkwargs = {}
+        # TODO #9: remove if-statement when it is always triggered
         if sys.version_info.major >= 3 and sys.version_info.minor >= 10:
             tkwargs = {"ignore_cleanup_errors": True}
         self.tempdir = tempfile.TemporaryDirectory(**tkwargs)
@@ -39,11 +40,19 @@ class TestMovie(object):
             if os.path.isfile(filename):
                 os.remove(filename)
 
+        # TODO #9: Remove try/except when Python 3.10 is the lowest version
         if os.path.isdir(self.movie_dir):
-            os.rmdir(self.movie_dir)
+            try:
+                os.rmdir(self.movie_dir)
+            except Exception:
+                pass
 
         # Remove the temporary directory
-        self.tempdir.cleanup()
+        # TODO #9: Remove try/except when Python 3.10 is the lowest version
+        try:
+            self.tempdir.cleanup()
+        except Exception:
+            pass
 
         # Clear the test environment attributes
         del self.movie_dir, self.tempdir, self.tempfiles, self.moviename

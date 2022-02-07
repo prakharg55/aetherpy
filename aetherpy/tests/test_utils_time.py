@@ -98,20 +98,29 @@ class TestUT(object):
             self.lon = np.full(shape=len(self.times), fill_value=self.lon)
         return
 
+    @pytest.mark.parametrize("lon_sign", [1, -1])
     @pytest.mark.parametrize("multi_lon", [True, False])
-    def test_ut_to_lt(self, multi_lon):
+    def test_ut_to_lt(self, lon_sign, multi_lon):
         """Test the datetime in UT to solar local time conversion.
 
         Parameters
         ----------
+        lon_sign : int
+            One or negative one, specifies whether longitude should be
+            positive or negative
         multi_lon : bool
            Include a single longitude value or an array-like object
 
         """
 
+        # Update the longitude
         self.update_lon(multi_lon)
+        self.lon *= lon_sign
+
+        # Get the solar local time
         out = tc.ut_to_lt(self.times, self.lon)
 
+        # Test the time output
         assert out.shape[0] == len(self.times)
         assert np.all(out == np.array(self.lt))
         return

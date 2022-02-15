@@ -19,7 +19,7 @@ class TestDataPrep(object):
         # Set the testing latitude and longitude range to
         # include all locations where model can uniquely
         # define both latitude and longitude
-        self.in_coords = {"lon": np.arange(-180, 180, 1.0),
+        self.in_coords = {"lon": np.arange(-180, 360, 1.0),
                           "lat": np.arange(-89.5, 90, 0.5),
                           "alt": np.arange(100, 10000, 100.0)}
 
@@ -77,7 +77,7 @@ class TestDataPrep(object):
 
         return
 
-    @pytest.mark.parametrize("cut_val", [-1, 400])
+    @pytest.mark.parametrize("cut_val", [-1, 600])
     @pytest.mark.parametrize("cut_coord", ["lon", "lat", "alt"])
     def test_bad_index_get_cut_index(self, cut_val, cut_coord):
         """Test raises ValueError when requested index is out of range.
@@ -122,7 +122,7 @@ class TestDataPrep(object):
                 self.in_coords["lon"], self.in_coords["lat"],
                 self.in_coords["alt"], cut_val, False, cut_coord)
 
-        assert str(verr).find("Requested cut is outside the coordiante") >= 0
+        assert str(verr).find("Requested cut is outside the coordinate") >= 0
         return
 
     @pytest.mark.parametrize("lowlim", [True, False])

@@ -174,7 +174,7 @@ class TestMovie(object):
         image_files = os.path.join(self.movie_dir, "".join([
             self.filebase, "%04d", self.fileext]))
 
-        # Create the move file
+        # Create the movie file
         outfile = mr.save_movie(self.movie_dir, movie_name=self.moviename,
                                 image_files=image_files, rate=rate)
 

@@ -17,7 +17,7 @@ class TestDataPrep(object):
         """Initialize clean test environment."""
 
         self.in_coords = {"lon": np.arange(-180, 180, 1.0),
-                          "lat": np.arange(-89, 90, 0.5),
+                          "lat": np.arange(-89.5, 90, 0.5),
                           "alt": np.arange(100, 10000, 100.0)}
 
         return

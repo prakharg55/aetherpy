@@ -80,7 +80,7 @@ def get_cut_index(lons, lats, alts, cut_val, isgrid=False, cut_coord='alt'):
         icut = cut_val
     else:
         if cut_val < z_coord.min() or cut_val > z_coord.max():
-            raise ValueError('Requested cut is outside the coordiante range')
+            raise ValueError('Requested cut is outside the coordinate range')
 
         icut = abs(z_coord - cut_val).argmin()
 

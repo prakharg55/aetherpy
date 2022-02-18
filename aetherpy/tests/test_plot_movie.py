@@ -11,29 +11,7 @@ import sys
 import tempfile
 
 from aetherpy.plot import movie_routines as mr
-
-
-def sys_agnostic_rename(inname, outname, max_attemps=100):
-    """Wrap os.rename, Windows OS sometimes needs time to allow rename to work.
-
-    Parameters
-    ----------
-    inname : str
-        Input filename or directory
-    outname : str
-        Output filename or directory
-    max_attemps : int
-        Maximum rename attemps (default=100)
-
-    """
-    for retry in range(max_attemps):
-        try:
-            os.rename(inname, outname)
-            break
-        except Exception:
-            pass
-
-    return
+from utils import sys_agnostic_rename
 
 
 class TestMovie(object):

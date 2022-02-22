@@ -13,21 +13,62 @@ from aetherpy.utils.time_conversion import epoch_to_datetime
 from aetherpy import logger
 
 
-def read_aether_headers(filelist, finds=-1):
-    """Obtain ancillary information from the netCDF file.
+def parse_line_into_int_and_string(line, parse_string=True):
+    """Parse a data string into integer and string components.
+
+    Parameters
+    ----------
+    line : str
+        Data line with a known format, described in Notes section
+    parse_string : bool
+        Construct a single white space separated string consisting of the
+        remaining portion of `line`
+
+    Returns
+    -------
+    line_num : int
+        Integer corresponding to the first number in `line`
+    line_str : str
+        Whitespace separated string containing the rest of the `line` data if
+        `parse_string` is True, otherwise it returns the original line
+
+    Notes
+    -----
+    Splits data line using a single space.  The first element is
+    expected to be an integer. If desired, the remaining data is returned as a
+    single space-separated string.
+
+    """
+
+    split_line = line.split(" ")
+    line_num = int(split_line[0])
+
+    if parse_string:
+        line_str = " ".join(split_line[1:])
+    else:
+        line_str = str(line)
+
+    return line_num, line_str
+
+
+def read_aether_headers(filelist, finds=-1, filetype="netcdf"):
+    """Obtain ancillary information from Aether files.
 
     Parameters
     ----------
     filelist : array-like
-        Array-like object of names for netCDF files
+        Array-like object of names for Aether files
     finds : int, list, or slice
         Index(es) for file(s) from which the header information will be read.
         (default=-1)
+    filetype : str
+        Input file type (must be the same for all files). Expects one of
+        'ascii' or 'netcdf' (default='netcdf')
 
     Returns
     -------
     header : dict
-        A dictionary containing header information from the netCDF files,
+        A dictionary containing header information from the files,
         including:
         nfiles - number of files in the list (not the number read)
         nlons - number of longitude grids
@@ -43,41 +84,95 @@ def read_aether_headers(filelist, finds=-1):
         If there are an unexpected number or name of variables or dimensions
         for any file in the file list.
 
-    Notes
-    -----
-    This routine obtains the same info as `read_gitm_headers`
+    See Also
+    --------
+    read_aether_ascii_header and read_aether_netcdf_header
 
     """
-    # Initialize the output
-    header = {"nfiles": len(filelist), "version": 0.1, "nlons": 0, "nlats": 0,
-              "nalts": 0, "vars": [], "time": []}
-
     # Ensure the filelist is array-like, allowing slicing of input
-    file_list = np.asarray(filelist)
-    header['filename'] = file_list
+    header['filename'] = np.asarray(filelist)
+    if header['filename'].shape == ():
+        header['filename'] = np.asarray([filelist])
+
+    # Initialize the output
+    header = {"nfiles": len(header['filename']), "vars": [], "time": [],
+              "filename": []}
 
     # Read the header info from the desired files
-    for filename in header['filename']:
-        with Dataset(filename, 'r') as ncfile:
-            ncvars = list()
-            for var in ncfile.variables.values():
-                if len(var.shape) == 3:
-                    nlons = var.shape[0]
-                    nlats = var.shape[1]
-                    nalts = var.shape[2]
-                    ncvars.append(var.name)
+    for filename in header['filename'][finds]:
+        if filetype.lower() == "netcdf":
+            fheader = read_aether_netcdf_header(filename)
+        else:
+            fheader = read_aether_ascii_header(filename)
 
-                    # Test the dimensions
-                    if(header['nlons'] == 0 and header['nlats'] == 0
-                       and header['nalts'] == 0):
-                        header["nlons"] = nlons
-                        header["nlats"] = nlats
-                        header["nalts"] = nalts
-                    elif(header['nlons'] != nlons or header['nlats'] != nlats
-                         or header['nalts'] != nalts):
-                        raise IOError(''.join(['unexpected dimensions for ',
-                                               'variable ', var.name,
-                                               ' in file ', filename]))
+        for hkey in fheader.keys():
+            if hkey in header.keys():
+                if hkey in ['vars', 'time', 'filename']:
+                    header[hkey].append(fheader[hkey])
+                elif header[hkey] != fheader[hkey]:
+                    raise ValueError(''.join(['header values changed between',
+                                              ' files: {:} != {:}'.format(
+                                                  header[hkey],
+                                                  fheader[hkey])]))
+            else:
+                header[hkey] = fheader[hkey]
+
+    return header
+
+
+def read_aether_netcdf_header(filename):
+    """Read header information from an Aether netCDF file.
+
+    Parameters
+    ----------
+    filename : str
+        An Aether netCDF filename
+
+    Returns
+    -------
+    header : dict
+        A dictionary containing header information from the netCDF files,
+        including:
+        nlons - number of longitude grids
+        nlats - number of latitude grids
+        nalts - number of altitude grids
+        nvars - number of data variable names
+        time - list of datetimes with data
+        filename - filename of file containing header data
+
+    See Also
+    --------
+    read_aether_header
+
+    """
+
+    # Test the filename and add it to the header
+    if not os.path.isfile(filename):
+        raise IOError('unknown aether netCDF file: {:}'.format(filename))
+
+    header = {'filename': filename}
+
+    # Open the file and read the header data
+    with Dataset(filename, 'r') as ncfile:
+        ncvars = list()
+        for var in ncfile.variables.values():
+            if len(var.shape) == 3:
+                nlons = var.shape[0]
+                nlats = var.shape[1]
+                nalts = var.shape[2]
+                ncvars.append(var.name)
+
+                # Test the dimensions
+                if(header['nlons'] == 0 and header['nlats'] == 0
+                   and header['nalts'] == 0):
+                    header["nlons"] = nlons
+                    header["nlats"] = nlats
+                    header["nalts"] = nalts
+                elif(header['nlons'] != nlons or header['nlats'] != nlats
+                     or header['nalts'] != nalts):
+                    raise IOError(''.join(['unexpected dimensions for ',
+                                           'variable ', var.name, ' in file ',
+                                           filename]))
 
             # Test the variable names
             if len(header["vars"]) == 0:
@@ -86,115 +181,87 @@ def read_aether_headers(filelist, finds=-1):
                 raise IOError(''.join(['unexpected number or name of ',
                                        'variables in file ', filename]))
 
-            # Add the time for this file
-            t = np.double(ncfile.variables['Time'][0])
-            header["time"].append(epoch_to_datetime(t))
+        # Add the time for this file
+        epoch = np.double(ncfile.variables['Time'][0])
+        header["time"] = epoch_to_datetime(epoch)
 
     return header
 
 
-def parse_line_into_int_and_string(line):
-    """Parse a data string into integer and string components.
-
-    Parameters
-    ----------
-    line : str
-        Data line with a known format
-
-    Returns
-    -------
-    line_num : int
-        Integer corresponding to the first number in `line`
-    line_str : str
-        Whitespace separated string containing the rest of the `line` data
-
-    Notes
-    -----
-    Splits data line using a single whitespace.  The first element is
-    expected to be an integer and the remaining data is returned as a
-    single whitespace separated string.
-
-    """
-
-    split_line = line.split(" ")
-    line_num = int(split_line[0])
-    line_str = " ".join(split_line[1:])
-
-    return line_num, line_str
-
-
 def read_aether_ascii_header(filelist):
-    """Read information from the ascii header file, which mirrors GITM.
+    """Read information from an Aether ascii header file.
 
     Parameters
     ----------
-    filelist : list
-        A list of ascii header file names.  The number of files is recorded,
-        but only the last file is used.
+    filename : str
+        An ascii header file name or binary filename with associated header
+        file present in the same directory.
 
     Returns
     -------
     header : dict
         A dictionary containing header information from the netCDF files,
         including:
-        nfiles - number of files in list
         nlons - number of longitude grids
         nlats - number of latitude grids
         nalts - number of altitude grids
         nvars - number of data variable names
-        time - list of datetimes with data
+        time - datetime for the file
+        vars - variables in the file
+        version - version number of the file
+        filename - filename of file containing header data
 
-    Notes
-    -----
-
+    See Also
+    --------
+    read_aether_header
 
     """
 
-    header = {"nfiles": len(filelist), "version": 0.1, "nlons": 0, "nlats": 0,
-              "nalts": 0, "nblockslons": 0, "nblockslats": 0, "nblocksalts": 0,
-              "nvars": 0, "vars": [], "time": [], "filename": []}
+    headerfile = filename.replace(".bin", ".header")
 
-    for filename in filelist:
-        header["filename"].append(filename)
-        headerfile = filename.replace(".bin", ".header")
+    # Test the filename and add it to the header
+    if not os.path.isfile(filename) and os.path.isfile(headerfile):
+        raise IOError('unknown aether header file: {:}'.format(headerfile))
 
-        with open(headerfile, 'r') as fpin:
-            for line in fpin:
-                if re.match(r'BLOCKS', line):
-                    header["nblockslons"] = int(fpin.readline())
-                    header["nblockslats"] = int(fpin.readline())
-                    header["nblocksalts"] = int(fpin.readline())
+    header = {"filename": filename}
 
-                if re.match(r'NUMERICAL', line):
-                    header["nvars"], _ = parse_line_into_int_and_string(
-                        fpin.readline())
-                    header["nlons"], _ = parse_line_into_int_and_string(
-                        fpin.readline())
-                    header["nlats"], _ = parse_line_into_int_and_string(
-                        fpin.readline())
-                    header["nalts"], _ = parse_line_into_int_and_string(
-                        fpin.readline())
+    with open(headerfile, 'r') as fpin:
+        for line in fpin:
+            if re.match(r'BLOCKS', line):
+                header["nblockslons"] = int(fpin.readline())
+                header["nblockslats"] = int(fpin.readline())
+                header["nblocksalts"] = int(fpin.readline())
 
-                if re.match(r'VERSION', line):
-                    header["version"] = float(fpin.readline())
+            if re.match(r'NUMERICAL', line):
+                header["nvars"], _ = parse_line_into_int_and_string(
+                    fpin.readline(), False)
+                header["nlons"], _ = parse_line_into_int_and_string(
+                    fpin.readline(), False)
+                header["nlats"], _ = parse_line_into_int_and_string(
+                    fpin.readline(), False)
+                header["nalts"], _ = parse_line_into_int_and_string(
+                    fpin.readline(), False)
 
-                if re.match(r'TIME', line):
-                    year = int(fpin.readline())
-                    month = int(fpin.readline())
-                    day = int(fpin.readline())
-                    hour = int(fpin.readline())
-                    minute = int(fpin.readline())
-                    second = int(fpin.readline())
-                    msec = int(fpin.readline())
-                    header["time"].append(dt.datetime(year, month, day, hour,
-                                                      minute, second, msec))
+            if re.match(r'VERSION', line):
+                header["version"] = float(fpin.readline())
 
-                mvar = re.match(r'VARIABLE', line)
-                if mvar and len(header["vars"]) < 1:
-                    for i in range(header["nvars"]):
-                        nlin, sline = parse_line_into_int_and_string(
-                            fpin.readline())
-                        header["vars"].append(sline.strip())
+            if re.match(r'TIME', line):
+                year = int(fpin.readline())
+                month = int(fpin.readline())
+                day = int(fpin.readline())
+                hour = int(fpin.readline())
+                minute = int(fpin.readline())
+                second = int(fpin.readline())
+                msec = int(fpin.readline())
+                header["time"] = dt.datetime(year, month, day, hour,
+                                             minute, second, msec)
+
+            mvar = re.match(r'VARIABLE', line)
+            if mvar and len(header["vars"]) < 1:
+                for i in range(header["nvars"]):
+                    nlin, sline = parse_line_into_int_and_string(
+                        fpin.readline(), True)
+                    header["vars"] = sline.strip()
 
     return header
 
@@ -285,13 +352,18 @@ def read_gitm_headers(filelist, finds=-1):
     This routine obtains the same info as `read_aether_headers`
 
     """
-    # Initialize the output
-    header = {"nfiles": len(filelist), "version": 0, "nlons": 0, "nlats": 0,
-              "nalts": 0, "vars": [], "time": []}
-
     # Ensure the filelist is array-like, allowing slicing of input
-    file_list = np.asarray(filelist)
-    header['filename'] = [file_list[finds]]
+    header['filename'] = np.asarray(filelist)
+    if header['filename'].shape == ():
+        header['filename'] = np.asarray([filelist])
+
+    # Initialize the output
+    header = {"nfiles": len(header['filename']), "version": 0, "nlons": 0,
+              "nlats": 0, "nalts": 0, "vars": [], "time": []}
+
+    # Slice the data
+    header['filename'] = header['filename'][finds]
+
     for filename in header['filename']:
         # Read in the header from the binary file
         file_vars = list()
@@ -380,6 +452,10 @@ def read_aether_file(filename, file_vars=None):
 
     """
     data = dict()
+    logger.info("Reading file : ", filename)
+
+    if not os.path.isfile(filename):
+        raise IOError('input file does not exist')
 
     with Dataset(filename, 'r') as ncfile:
         # Save a list of all variable names
@@ -424,6 +500,10 @@ def read_gitm_file(filename, file_vars=None):
 
     data = {"version": 0, "nlons": 0, "nlats": 0, "nalts": 0, "time": 0,
             "vars": []}
+    logger.info("Reading file : ", filename)
+
+    if not os.path.isfile(filename):
+        raise IOError('input file does not exist')
 
     with open(filename, 'rb') as fin:
         # Determine the correct endian

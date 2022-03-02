@@ -95,7 +95,7 @@ def get_command_line_args(argv):
     # Initialize the arguments to their default values
     args = {'filelist': [], 'log': False, 'var': 15, 'alt': 400, 'tec': False,
             'lon': np.nan, 'lat': np.nan, 'cut': 'alt', 'winds': False,
-            'diff': False, 'IsGitm': False, 'has_header': False, 'movie': 0,
+            'diff': False, 'is_gitm': False, 'has_header': False, 'movie': 0,
             'ext': 'png'}
 
     arg_type = {'filelist': list, 'log': bool, 'var': int, 'alt': int,
@@ -147,7 +147,7 @@ def get_command_line_args(argv):
 
             match_bin = re.match(r'(.*)bin', arg)
             if match_bin:
-                args['IsGitm'] = True
+                args['is_gitm'] = True
                 args['has_header'] = False
 
                 # Check for a header file:

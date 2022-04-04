@@ -229,8 +229,7 @@ class TestIORead(object):
         for i in range(len(data['vars'])):
             assert i in data.keys(), \
                 'missing data index {:d} in output'.format(i)
-            assert data[i].dtype in [np.float16, np.float32, np.float64,
-                                     np.float128]
+            assert data[i].dtype in [np.float16, np.float32, np.float64]
             assert i < len(data['units'])
             assert i < len(data['long_name'])
             assert isinstance(data['units'][i], str)

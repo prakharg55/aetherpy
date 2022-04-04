@@ -149,7 +149,7 @@ class TestLocalFetch(object):
         for i, record in enumerate(caplog.records):
             # Evaluate the logging message
             assert record.message.find(ordered_msgs[i]) >= 0, \
-                "unexpected log output: {:s}".format(captured)
+                "unexpected log output: {:s}".format(record.message)
 
             # Evaluate the logging output level
             assert record.levelname == ordered_lvl[i]

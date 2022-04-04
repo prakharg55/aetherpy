@@ -27,3 +27,25 @@ def sys_agnostic_rename(inname, outname, max_attemps=100):
             pass
 
     return
+
+
+def sys_agnostic_remove(fname, max_attemps=100):
+    """Wrap os.remove, Windows OS sometimes needs time to allow remove to work.
+
+    Parameters
+    ----------
+    fname : str
+        Filename to be removed
+    max_attemps : int
+        Maximum rename attemps (default=100)
+
+    """
+    for retry in range(max_attemps):
+        if os.path.isfile(fname):
+            try:
+                os.remove(fname)
+                break
+            except Exception:
+                pass
+
+    return

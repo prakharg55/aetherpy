@@ -10,6 +10,7 @@ import sys
 import tempfile
 
 from aetherpy.io import fetch_routines
+from aetherpy.tests.utils import sys_agnostic_remove
 
 
 class TestLocalFetch(object):
@@ -35,8 +36,7 @@ class TestLocalFetch(object):
         """Clean up the test environment."""
         # Remove the created files and directories
         for filename in self.tempfiles:
-            if os.path.isfile(filename):
-                os.remove(filename)
+            sys_agnostic_remove(filename)
 
         # Remove the temporary directory
         # TODO #9: Remove try/except when Python 3.10 is the lowest version

@@ -11,6 +11,7 @@ import sys
 import tempfile
 
 from aetherpy.plot import movie_routines as mr
+from aetherpy.tests.utils import sys_agnostic_remove
 from aetherpy.tests.utils import sys_agnostic_rename
 
 
@@ -38,8 +39,7 @@ class TestMovie(object):
         """Clean up the test environment."""
         # Remove the created files and directories
         for filename in self.tempfiles:
-            if os.path.isfile(filename):
-                os.remove(filename)
+            sys_agnostic_remove(filename)
 
         # TODO #9: Remove try/except when Python 3.10 is the lowest version
         if os.path.isdir(self.movie_dir):

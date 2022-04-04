@@ -167,9 +167,9 @@ class TestIORead(object):
         return
 
     def test_read_aether_netcdf_header_bad_file(self):
-        """Test raises ValueError with bad filename."""
+        """Test raises IOError with bad filename."""
 
-        with pytest.raises(ValueError) as verr:
+        with pytest.raises(IOError) as verr:
             read_routines.read_aether_netcdf_header("not_a_file")
 
         assert str(verr).find("unknown aether netCDF file") >= 0
@@ -196,17 +196,6 @@ class TestIORead(object):
         self.header = read_routines.read_aether_headers(filenames, finds,
                                                         ftype)
         self.eval_header(file_list=True)
-        return
-
-    def test_read_aether_headers_dup_times(self):
-        """Test raises ValueError for list of files with the same time."""
-
-        filenames = glob(os.path.join(self.test_dir, "3D*.nc"))
-
-        with pytest.raises(ValueError) as verr:
-            read_routines.read_aether_headers(filenames)
-
-        assert str(verr).find("duplicate times in file list") >= 0
         return
 
     @pytest.mark.parametrize('fname', ['3DALL_20110320_003000_g0001.nc',

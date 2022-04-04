@@ -123,9 +123,8 @@ def read_aether_headers(filelist, finds=None, filetype="netcdf"):
         for hkey in fheader.keys():
             if hkey in header.keys():
                 if hkey == 'time':
-                    if fheader[hkey] in header[hkey]:
-                        raise ValueError('duplicate times in file list')
-                    header[hkey].append(fheader[hkey])
+                    if fheader[hkey] not in header[hkey]:
+                        header[hkey].append(fheader[hkey])
                 elif hkey == 'vars' and np.any(header[hkey] != fheader[hkey]):
                     header[hkey] = list(np.unique(header[hkey] + fheader[hkey]))
                 elif hkey != 'filename' and header[hkey] != fheader[hkey]:

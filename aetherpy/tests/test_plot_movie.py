@@ -11,7 +11,7 @@ import sys
 import tempfile
 
 from aetherpy.plot import movie_routines as mr
-from utils import sys_agnostic_rename
+from aetherpy.tests.utils import sys_agnostic_rename
 
 
 class TestMovie(object):

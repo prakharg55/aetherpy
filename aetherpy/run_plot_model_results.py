@@ -243,7 +243,7 @@ def plot_model_results():
 
             # Find the desired index to cut along to get a 2D slice
             icut, cut_data, x_pos, y_pos, z_val = data_prep.get_cut_index(
-                lons, lats, alts, args[args['cut']], args['cut'])
+                lons, lats, alts, args[args['cut']], False, args['cut'])
 
         # Save the time data
         all_times.append(data["time"])

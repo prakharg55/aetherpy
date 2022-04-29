@@ -407,8 +407,8 @@ def read_gitm_headers(filelist, finds=-1):
             _, rec_len = unpack(end_char + '2l', fin.read(8))
 
             # Test the version number
-            if 'version' not in header.keys() == 0:
-                header["version"] = file_version
+            if 'version' not in header.keys():
+                header['version'] = file_version
             elif header['version'] != file_version:
                 raise IOError(''.join(['unexpected version number in file ',
                                        filename]))

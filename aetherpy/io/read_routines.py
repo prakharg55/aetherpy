@@ -174,14 +174,13 @@ def read_aether_netcdf_header(filename, epoch_name='time'):
 
     # Open the file and read the header data
     with Dataset(filename, 'r') as ncfile:
-        # ncvars = list()
-        header['vars'] = list(ncfile.variables.keys())[1:]
+        ncvars = list()
         for var in ncfile.variables.values():
             if len(var.shape) == 3:
                 nlons = var.shape[0]
                 nlats = var.shape[1]
                 nalts = var.shape[2]
-                # ncvars.append(var.name)
+                ncvars.append(var.name)
 
                 # Test the dimensions
                 if np.any([dim_var not in header.keys()
@@ -196,12 +195,12 @@ def read_aether_netcdf_header(filename, epoch_name='time'):
                                            filename]))
 
         # Save the unique variable names
-        # ncvars = np.unique(ncvars)
-        # if "vars" not in header.keys() or len(header['vars']) == 0:
-        #     header["vars"] = list(ncvars)
-        # elif np.any(header["vars"] != ncvars):
-        #     raise IOError(''.join(['unexpected number or name of variables in',
-        #                            ' file: ', filename]))
+        ncvars = np.unique(ncvars)
+        if "vars" not in header.keys() or len(header['vars']) == 0:
+            header["vars"] = list(ncvars)
+        elif np.any(header["vars"] != ncvars):
+            raise IOError(''.join(['unexpected number or name of variables in',
+                                   ' file: ', filename]))
 
         # Add the time for this file
         epoch = np.double(ncfile.variables[epoch_name][0])
@@ -287,15 +286,16 @@ def read_aether_ascii_header(filename):
 
     return header
 
+
 #  Gets dimensions, variables, attributes (may not have attributes)
 # --will require work to integrate with aetherpy
 # --not same format as GITM file headers
-# --only meant for reading block-based Aether netcdf files (assumes existence of blocks)
+# --only meant for reading block-based Aether netcdf files
 def read_blocked_netcdf_header(filename):
     # Checks for file existence
     if not os.path.isfile(filename):
         raise IOError('unknown aether netCDF file: {:}'.format(filename))
-    
+
     header = {'filename': filename}  # Included for compatibility
 
     with Dataset(filename, 'r') as ncfile:
@@ -307,15 +307,17 @@ def read_blocked_netcdf_header(filename):
 
         # Included for compatibility ('vars' slices time out for some reason)
         header['vars'] = list(ncfile.variables.keys())[1:]
-        header['time'] = epoch_to_datetime(np.array(ncfile.variables['time'])[0])
-    
+        header['time'] = epoch_to_datetime(
+            np.array(ncfile.variables['time'])[0])
+
     return header
+
 
 def read_blocked_netcdf_file(filename, file_vars=None):
     # Checks for file existence
     if not os.path.isfile(filename):
         raise IOError('unknown aether netCDF file: {:}'.format(filename))
-    
+
     data = {'filename': filename}  # Included for compatibility
 
     with Dataset(filename, 'r') as ncfile:
@@ -328,13 +330,15 @@ def read_blocked_netcdf_file(filename, file_vars=None):
         # Included for compatibility
         data['vars'] = [var for var in ncfile.variables.keys()
                         if file_vars is None or var in file_vars]
-        data['time'] = epoch_to_datetime(np.array(ncfile.variables['time'])[0])
 
         # Fetch requested variable data
         for var in data['vars']:
-            data[var] = np.array(ncfile.variables[var]) # key is var name, not index
-    
+            data[var] = np.array(ncfile.variables[var])  # key is var name
+
+        data['time'] = epoch_to_datetime(np.array(ncfile.variables['time'])[0])
+
     return data
+
 
 def read_aether_one_binary_file(header, ifile, vars_to_read):
     """Read in list of variables from a single netCDF file.

@@ -309,3 +309,12 @@ class TestIORead(object):
             # TODO: add attribute checking once implemented
 
         return
+
+    def test_read_blocked_netcdf_file_bad_file(self):
+        """Test raises IOError with bad filename."""
+
+        with pytest.raises(IOError) as verr:
+            read_routines.read_blocked_netcdf_file("not_a_file")
+
+        assert str(verr).find("unknown aether netCDF file") >= 0
+        return

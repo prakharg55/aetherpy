@@ -79,9 +79,9 @@ class TestIORead(object):
                         assert os.path.isfile(fname), \
                             "header filename {:} is not a file".format(fname)
                 else:
-                    assert (len(set(self.header[hkey])) ==
-                            len(self.header[hkey])), \
-                               "duplicate variables in header list"
+                    assert (len(set(self.header[hkey]))
+                            == len(self.header[hkey])), \
+                        "duplicate variables in header list"
 
                     for var in self.header[hkey]:
                         assert isinstance(var, str), \

@@ -307,5 +307,5 @@ class TestIORead(object):
             assert var in data.keys(), \
                 'missing variable {:} in output'.format(var)
             # TODO: add attribute checking once implemented
-        
+
         return

@@ -318,7 +318,12 @@ def read_blocked_netcdf_file(filename, file_vars=None):
     if not os.path.isfile(filename):
         raise IOError('unknown aether netCDF file: {:}'.format(filename))
 
-    data = {'filename': filename}  # Included for compatibility
+    # NOTE: Includes header information for easy access until
+    #       updated package structure is confirmed
+    # Initialize data dict with defaults (will remove these defaults later)
+    data = {'filename': filename,
+            'units': '',
+            'long_name': None}
 
     with Dataset(filename, 'r') as ncfile:
         # Process header information: nlons, nlats, nalts, nblocks
@@ -334,6 +339,12 @@ def read_blocked_netcdf_file(filename, file_vars=None):
         # Fetch requested variable data
         for var in data['vars']:
             data[var] = np.array(ncfile.variables[var])  # key is var name
+
+        # TODO: Fetch all attribute data
+        #       Will either implement this by attaching metadata to ndarray
+        #       (metadata or subclassing) OR map variable names to dicts
+        #       containing data ndarray and attributes
+        #       When this is complete, remove 'units' and 'long_name'
 
         data['time'] = epoch_to_datetime(np.array(ncfile.variables['time'])[0])
 

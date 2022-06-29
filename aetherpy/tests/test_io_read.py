@@ -172,7 +172,7 @@ class TestIORead(object):
         with pytest.raises(IOError) as verr:
             read_routines.read_aether_netcdf_header("not_a_file")
 
-        assert str(verr).find("unknown aether netCDF file") >= 0
+        assert str(verr).find("unknown aether netCDF blocked file") >= 0
         return
 
     @pytest.mark.parametrize('fbase', ['3DALL_*g*.nc', '3DBFI_*g*.nc'])

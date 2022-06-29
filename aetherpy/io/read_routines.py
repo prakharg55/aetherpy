@@ -302,14 +302,43 @@ def read_aether_ascii_header(filename):
     return header
 
 
-#  Gets dimensions, variables, attributes (may not have attributes)
-# --will require work to integrate with aetherpy
-# --not same format as GITM file headers
-# --only meant for reading block-based Aether netcdf files
 def read_blocked_netcdf_header(filename):
+    """Read header information from a blocked Aether netcdf file.
+
+    Parameters
+    ----------
+    filename : str
+        An Aether netCDF filename
+
+    Returns
+    -------
+    header : dict
+        A dictionary containing header information from the netCDF file,
+        including:
+        filename - filename of file containing header data
+        nlons - number of longitude grids per block
+        nlats - number of latitude grids per block
+        nalts - number of altitude grids per block
+        nblocks - number of blocks in file
+        vars - list of data variable names
+        time - datetime for time of file
+
+    Raises
+    --------
+    IOError
+        If the input file does not exist
+    KeyError
+        If any expected dimensions of the input netCDF file are not present
+
+    Notes
+    -----
+    This routine only works with blocked Aether netCDF files.
+
+    """
+
     # Checks for file existence
     if not os.path.isfile(filename):
-        raise IOError('unknown aether netCDF file: {:}'.format(filename))
+        raise IOError(f"unknown aether netCDF blocked file: {filename}")
 
     header = {'filename': filename}  # Included for compatibility
 
@@ -329,9 +358,47 @@ def read_blocked_netcdf_header(filename):
 
 
 def read_blocked_netcdf_file(filename, file_vars=None):
+    """Read all data from a blocked Aether netcdf file.
+
+    Parameters
+    ----------
+    filename : str
+        An Aether netCDF filename
+    file_vars : list or NoneType
+        List of desired variable neames to read, or None to read all
+        (default=None)
+
+    Returns
+    -------
+    data : dict
+        A dictionary containing all data from the netCDF file, including:
+        filename - filename of file containing header data
+        nlons - number of longitude grids per block
+        nlats - number of latitude grids per block
+        nalts - number of altitude grids per block
+        nblocks - number of blocks in file
+        vars - list of data variable names
+        time - datetime for time of file
+        The dictionary also contains a read_routines.DataArray keyed to the
+        corresponding variable name. Each DataArray carries both the variable's
+        data from the netCDF file and the variable's corresponding attributes.
+
+    Raises
+    --------
+    IOError
+        If the input file does not exist
+    KeyError
+        If any expected dimensions of the input netCDF file are not present
+
+    Notes
+    -----
+    This routine only works with blocked Aether netCDF files.
+
+    """
+
     # Checks for file existence
     if not os.path.isfile(filename):
-        raise IOError('unknown aether netCDF file: {:}'.format(filename))
+        raise IOError(f"unknown aether netCDF blocked file: {filename}")
 
     # NOTE: Includes header information for easy access until
     #       updated package structure is confirmed

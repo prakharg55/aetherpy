@@ -259,8 +259,7 @@ class TestIORead(object):
         #     filename, file_vars=fvars)
 
         self.header = read_routines.read_blocked_netcdf_header(
-            filename
-        )
+            filename)
         self.eval_header(file_list=False)
         return
 

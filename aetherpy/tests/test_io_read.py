@@ -255,8 +255,6 @@ class TestIORead(object):
         assert os.path.isfile(filename), "missing test file: {:}".format(
             filename)
 
-        # self.header = read_routines.read_blocked_netcdf_header(
-        #     filename, file_vars=fvars)
 
         self.header = read_routines.read_blocked_netcdf_header(
             filename)

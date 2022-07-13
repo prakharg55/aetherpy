@@ -3,6 +3,8 @@
 # Full license can be found in License.md
 """Routines to read Aether files."""
 
+# TODO(#19): Most parts of this file will be changed when switching to xarray
+
 import datetime as dt
 from netCDF4 import Dataset
 import numpy as np
@@ -12,7 +14,6 @@ import re
 
 from aetherpy.utils.time_conversion import epoch_to_datetime
 from aetherpy import logger
-
 
 class DataArray(np.ndarray):
     def __new__(cls, input_array, attrs={}):

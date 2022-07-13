@@ -289,7 +289,7 @@ class TestIORead(object):
         data = read_routines.read_blocked_netcdf_file(filename, file_vars=fvars)
 
         # Evaluate the output keys
-        # TODO(#018): 'units' and 'long_name' are here for compatibility
+        # TODO(#18): 'units' and 'long_name' are here for compatibility
         #       will be removed when library is refactored
         #       They are dummy keys containing no data right now
         assert(isinstance(data, dict))

@@ -15,6 +15,7 @@ import re
 from aetherpy.utils.time_conversion import epoch_to_datetime
 from aetherpy import logger
 
+
 class DataArray(np.ndarray):
     def __new__(cls, input_array, attrs={}):
         obj = np.asarray(input_array).view(cls)

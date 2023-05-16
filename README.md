@@ -16,29 +16,27 @@ The Python package that supports Aether model data management and analysis.
 ```
 git clone https://github.com/AetherModel/aetherpy
 cd aetherpy
-python setup.py install
+git checkout develop
+
+python setup.py install --user
+# <or>
+python setup.py develop --user
 ```
 
-If you want to install aetherpy for the entire system, you will need to add
-`sudo` in front of the final command in the above block.  To install for
-yourself without root priveledges, append `--user` to the end of the final
-command.
+If you want to install aetherpy for the entire system, you will need
+to take off the `--user` flag and add `sudo` in front of the
+command in the above block:
+```
+sudo python setup.py install
+```
+
+The difference between the `install` and `develop` methods is that
+develop allows you to change branches to the desired test brach or
+alter files without needing to re-install aetherpy.
 
 ## Installation from PyPi
 
 Pip installation will soon be available
-
-## Installation for development
-
-If you intend to contribute to the testing or development of aetherpy, you will
-need to install in develop mode:
-
-```
-python setup.py develop
-```
-
-This allows you to change branches to the desired test brach or alter files
-without needing to re-install aetherpy.
 
 # Getting Started
 

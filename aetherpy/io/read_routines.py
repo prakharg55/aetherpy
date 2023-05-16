@@ -3,6 +3,8 @@
 # Full license can be found in License.md
 """Routines to read Aether files."""
 
+# TODO(#19): Most parts of this file will be changed when switching to xarray
+
 import datetime as dt
 from netCDF4 import Dataset
 import numpy as np
@@ -12,6 +14,21 @@ import re
 
 from aetherpy.utils.time_conversion import epoch_to_datetime
 from aetherpy import logger
+
+
+class DataArray(np.ndarray):
+    def __new__(cls, input_array, attrs={}):
+        obj = np.asarray(input_array).view(cls)
+        obj.attrs = attrs
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None:
+            return
+        self.attrs = getattr(obj, 'attrs', {
+            'units': None,
+            'long_name': None
+        })
 
 
 def parse_line_into_int_and_string(line, parse_string=True):
@@ -137,6 +154,93 @@ def read_aether_headers(filelist, finds=None, filetype="netcdf"):
 
     return header
 
+
+def read_aether_headers(filelist, finds=None, filetype="netcdf"):
+    """Obtain ancillary information from Aether files.
+
+    Parameters
+    ----------
+    filelist : array-like
+        Array-like object of names for Aether files
+    finds : int, list, slice, or NoneType
+        Index(es) for file(s) from which the header information will be read.
+        If None, reads headers from all files, ensuring data across all files
+        are consistent. (default=None)
+    filetype : str
+        Input file type (must be the same for all files). Expects one of
+        'ascii' or 'netcdf' (default='netcdf')
+
+    Returns
+    -------
+    header : dict
+        A dictionary containing header information from the files,
+        including:
+        nlons - number of longitude grids
+        nlats - number of latitude grids
+        nalts - number of altitude grids
+        vars - list of data variable names
+        time - list of datetimes for the processed file start times
+        filename - list of the input filenames
+
+    Raises
+    ------
+    ValueError
+        If there are an unexpected number or name of variables or dimensions
+        for any file in the file list.
+
+    See Also
+    --------
+    read_aether_ascii_header and read_aether_netcdf_header
+
+    Notes
+    -----
+    Reading may be sped up by loading data from a single header, but loading
+    from all will ensure all files in the list have the same format.
+
+    """
+
+    # Initialize the output
+    header = {"vars": [], "time": [], "filename": np.asarray(filelist)}
+
+    # Ensure the filelist is array-like, allowing slicing of input
+    if header['filename'].shape == ():
+        header['filename'] = [filelist]
+    else:
+        header['filename'] = list(header['filename'])
+
+    # Ensure selected files are list-like
+    if finds is None:
+        hfiles = np.asarray(header['filename'])
+    else:
+        hfiles = np.asarray(header['filename'])[finds]
+        if hfiles.shape == ():
+            hfiles = np.asarray([hfiles])
+
+    # Read the header info from the desired files
+    for iFile, filename in enumerate(hfiles):
+        if filetype.lower() == "netcdf":
+            fheader = read_aether_netcdf_header(filename)
+        else:
+            fheader = read_aether_json_header(filename)
+            header['filename'][iFile] = filename.replace(".json", ".bin")
+
+        for hkey in fheader.keys():
+            if hkey in header.keys():
+                if hkey == 'time':
+                    if fheader[hkey] not in header[hkey]:
+                        header[hkey].append(fheader[hkey])
+                elif hkey == 'vars' and np.any(header[hkey] != fheader[hkey]):
+                    #header[hkey] = list(np.unique(header[hkey] + fheader[hkey]))
+                    header[hkey] = fheader[hkey]
+                elif hkey != 'filename' and header[hkey] != fheader[hkey]:
+                    raise ValueError(''.join(['header values changed between',
+                                              ' files: {:} != {:}'.format(
+                                                  header[hkey],
+                                                  fheader[hkey])]))
+            else:
+                header[hkey] = fheader[hkey]
+
+    return header
 
 def read_aether_netcdf_header(filename, epoch_name='time'):
     """Read header information from an Aether netCDF file.
@@ -287,6 +391,132 @@ def read_aether_ascii_header(filename):
     return header
 
 
+def read_blocked_netcdf_header(filename):
+    """Read header information from a blocked Aether netcdf file.
+
+    Parameters
+    ----------
+    filename : str
+        An Aether netCDF filename
+
+    Returns
+    -------
+    header : dict
+        A dictionary containing header information from the netCDF file,
+        including:
+        filename - filename of file containing header data
+        nlons - number of longitude grids per block
+        nlats - number of latitude grids per block
+        nalts - number of altitude grids per block
+        nblocks - number of blocks in file
+        vars - list of data variable names
+        time - datetime for time of file
+
+    Raises
+    --------
+    IOError
+        If the input file does not exist
+    KeyError
+        If any expected dimensions of the input netCDF file are not present
+
+    Notes
+    -----
+    This routine only works with blocked Aether netCDF files.
+
+    """
+
+    # Checks for file existence
+    if not os.path.isfile(filename):
+        raise IOError(f"unknown aether netCDF blocked file: {filename}")
+
+    header = {'filename': filename}  # Included for compatibility
+
+    with Dataset(filename, 'r') as ncfile:
+        # Process header information: nlons, nlats, nalts, nblocks
+        header['nlons'] = len(ncfile.dimensions['lon'])
+        header['nlats'] = len(ncfile.dimensions['lat'])
+        header['nalts'] = len(ncfile.dimensions['z'])
+        header['nblocks'] = len(ncfile.dimensions['block'])
+
+        # Included for compatibility ('vars' slices time out for some reason)
+        header['vars'] = list(ncfile.variables.keys())[1:]
+        header['time'] = epoch_to_datetime(
+            np.array(ncfile.variables['time'])[0])
+
+    return header
+
+
+def read_blocked_netcdf_file(filename, file_vars=None):
+    """Read all data from a blocked Aether netcdf file.
+
+    Parameters
+    ----------
+    filename : str
+        An Aether netCDF filename
+    file_vars : list or NoneType
+        List of desired variable neames to read, or None to read all
+        (default=None)
+
+    Returns
+    -------
+    data : dict
+        A dictionary containing all data from the netCDF file, including:
+        filename - filename of file containing header data
+        nlons - number of longitude grids per block
+        nlats - number of latitude grids per block
+        nalts - number of altitude grids per block
+        nblocks - number of blocks in file
+        vars - list of data variable names
+        time - datetime for time of file
+        The dictionary also contains a read_routines.DataArray keyed to the
+        corresponding variable name. Each DataArray carries both the variable's
+        data from the netCDF file and the variable's corresponding attributes.
+
+    Raises
+    --------
+    IOError
+        If the input file does not exist
+    KeyError
+        If any expected dimensions of the input netCDF file are not present
+
+    Notes
+    -----
+    This routine only works with blocked Aether netCDF files.
+
+    """
+
+    # Checks for file existence
+    if not os.path.isfile(filename):
+        raise IOError(f"unknown aether netCDF blocked file: {filename}")
+
+    # NOTE: Includes header information for easy access until
+    #       updated package structure is confirmed
+    # Initialize data dict with defaults (will remove these defaults later)
+    data = {'filename': filename,
+            'units': '',
+            'long_name': None}
+
+    with Dataset(filename, 'r') as ncfile:
+        # Process header information: nlons, nlats, nalts, nblocks
+        data['nlons'] = len(ncfile.dimensions['lon'])
+        data['nlats'] = len(ncfile.dimensions['lat'])
+        data['nalts'] = len(ncfile.dimensions['z'])
+        data['nblocks'] = len(ncfile.dimensions['block'])
+
+        # Included for compatibility
+        data['vars'] = [var for var in ncfile.variables.keys()
+                        if file_vars is None or var in file_vars]
+
+        # Fetch requested variable data
+        for key in data['vars']:
+            var = ncfile.variables[key]  # key is var name
+            data[key] = DataArray(np.array(var), var.__dict__)
+
+        data['time'] = epoch_to_datetime(np.array(ncfile.variables['time'])[0])
+
+    return data
+
+
 def read_aether_one_binary_file(header, ifile, vars_to_read):
     """Read in list of variables from a single netCDF file.
 
@@ -407,8 +637,8 @@ def read_gitm_headers(filelist, finds=-1):
             _, rec_len = unpack(end_char + '2l', fin.read(8))
 
             # Test the version number
-            if 'version' not in header.keys() == 0:
-                header["version"] = file_version
+            if 'version' not in header.keys():
+                header['version'] = file_version
             elif header['version'] != file_version:
                 raise IOError(''.join(['unexpected version number in file ',
                                        filename]))

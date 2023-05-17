@@ -14,7 +14,7 @@ The Python package that supports Aether model data management and analysis.
 ## Installation from GitHub
 
 ```
-git clone https://github.com/AetherModel/aetherpy
+git clone https://github.com/aaronjridley/aetherpy
 cd aetherpy
 git checkout develop
 

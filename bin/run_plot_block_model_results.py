@@ -572,7 +572,13 @@ def plot_model_block_results():
         # Generate plots for each variable requested
         for var_to_plot in plot_vars:
             var_name_stripped = var_to_plot.replace(" ", "")
-            plot_filename = f"{filename.split('.')[0]}_{var_name_stripped}"
+            if data['isEnsemble'] and data['ensembleMembers'] > 1:
+                plot_filename = f"{filename.split('.')[0][:-3]}{var_name_stripped}_a{alt_to_plot}" \
+                                + f"_{filename.split('/')[-1][6:21]}" \
+                                + f"_e{str(data['ensembleNumber']).zfill(3)}"
+            else:
+                plot_filename = f"{filename.split('.')[0][:-3]}{var_name_stripped}_a{alt_to_plot}" \
+                                + f"_{filename.split('/')[-1][6:-3]}"
             try:
                 mini = var_min[var_to_plot]
                 maxi = var_max[var_to_plot]

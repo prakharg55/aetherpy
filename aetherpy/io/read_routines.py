@@ -411,6 +411,7 @@ def read_blocked_netcdf_header(filename):
         nblocks - number of blocks in file
         vars - list of data variable names
         time - datetime for time of file
+        isEnsemble - if true, stores ensembleNumber and ensembleMembers
 
     Raises
     --------
@@ -442,6 +443,14 @@ def read_blocked_netcdf_header(filename):
         header['vars'] = list(ncfile.variables.keys())[1:]
         header['time'] = epoch_to_datetime(
             np.array(ncfile.variables['time'])[0])
+        
+        try:
+            header['isEnsemble'] = True if ncfile.isEnsemble == "True" else False
+        except:
+            header['isEnsemble'] = False
+        if header['isEnsemble']:
+            header['ensembleNumber'] = int(ncfile.ensembleNumber)
+            header['ensembleMembers'] = int(ncfile.ensembleMembers)
 
     return header
 
@@ -468,6 +477,7 @@ def read_blocked_netcdf_file(filename, file_vars=None):
         nblocks - number of blocks in file
         vars - list of data variable names
         time - datetime for time of file
+        isEnsemble - if true, stores ensembleNumber and ensembleMembers
         The dictionary also contains a read_routines.DataArray keyed to the
         corresponding variable name. Each DataArray carries both the variable's
         data from the netCDF file and the variable's corresponding attributes.
@@ -514,6 +524,14 @@ def read_blocked_netcdf_file(filename, file_vars=None):
 
         data['time'] = epoch_to_datetime(np.array(ncfile.variables['time'])[0])
 
+        try:
+            data['isEnsemble'] = True if ncfile.isEnsemble == "True" else False
+        except:
+            data['isEnsemble'] = False
+        if data['isEnsemble']:
+            data['ensembleNumber'] = int(ncfile.ensembleNumber)
+            data['ensembleMembers'] = int(ncfile.ensembleMembers)
+            
     return data
 
 

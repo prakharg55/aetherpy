@@ -336,11 +336,13 @@ def plot_model_results():
             lons = np.degrees(data[0][:, 0, 0])  # Convert from rad to deg
             lats = np.degrees(data[1][0, :, 0])  # Convert from rad to deg
             # Find the desired index to cut along to get a 2D slice
+            isgrid = False
             if (args.cut == 'alt'):
                 pos = args.alt
                 if (len(alts) == 1):
                     print("Only one alt found, setting alt pos = 0");
                     pos = 0
+                    isgrid = True
                 lat2d = data[1][:, :, 0]  # Convert from rad to deg
                 dlon = data[0][1, 0, 0] - data[0][0, 0, 0]
                 dlat = data[1][0, 1, 0] - data[1][0, 0, 0]
@@ -352,7 +354,7 @@ def plot_model_results():
                 pos = args.lat
                 
             icut, cut_data, x_pos, y_pos, z_val = data_prep.get_cut_index(
-                lons, lats, alts, pos, False, args.cut)
+                lons, lats, alts, pos, isgrid, args.cut)
 
         if (args.cut == 'alt'):
             int_data = data[ivar][cut_data] * area

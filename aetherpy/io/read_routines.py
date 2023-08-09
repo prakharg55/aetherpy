@@ -7,6 +7,7 @@
 
 import datetime as dt
 from netCDF4 import Dataset
+from h5py import File
 import numpy as np
 import os
 from struct import unpack
@@ -411,6 +412,7 @@ def read_blocked_netcdf_header(filename):
         nblocks - number of blocks in file
         vars - list of data variable names
         time - datetime for time of file
+        isEnsemble - if true, stores ensembleNumber and ensembleMembers
 
     Raises
     --------
@@ -442,6 +444,82 @@ def read_blocked_netcdf_header(filename):
         header['vars'] = list(ncfile.variables.keys())[1:]
         header['time'] = epoch_to_datetime(
             np.array(ncfile.variables['time'])[0])
+        
+        try:
+            header['isEnsemble'] = True if ncfile.isEnsemble == "True" else False
+        except:
+            header['isEnsemble'] = False
+        if header['isEnsemble']:
+            header['ensembleNumber'] = int(ncfile.ensembleNumber)
+            header['ensembleMembers'] = int(ncfile.ensembleMembers)
+
+    return header
+
+
+def read_blocked_hdf5_header(filename):
+    """Read header information from a blocked Aether hdf5 file.
+
+    Parameters
+    ----------
+    filename : str
+        An Aether hdf5 filename
+
+    Returns
+    -------
+    header : dict
+        A dictionary containing header information from the hdf5 file,
+        including:
+        filename - filename of file containing header data
+        nlons - number of longitude grids per block
+        nlats - number of latitude grids per block
+        nalts - number of altitude grids per block
+        nblocks - number of blocks in file
+        vars - list of data variable names
+        time - datetime for time of file
+        isEnsemble - if true, stores ensembleNumber and ensembleMembers
+
+    Raises
+    --------
+    IOError
+        If the input file does not exist
+    KeyError
+        If any expected dimensions of the input hdf5 file are not present
+
+    Notes
+    -----
+    This routine only works with blocked Aether hdf5 files.
+
+    """
+
+    # Checks for file existence
+    if not os.path.isfile(filename):
+        raise IOError(f"unknown aether hdf5 blocked file: {filename}")
+
+    header = {'filename': filename}  # Included for compatibility
+
+    with File(filename, 'r') as hdf5file:
+        # Process header information: nlons, nlats, nalts, nblocks
+        header['nlons'] = hdf5file['nlons'][0]
+        header['nlats'] = hdf5file['nlats'][0]
+        header['nalts'] = hdf5file['nalts'][0]
+        header['nblocks'] = hdf5file['nblocks'][0]
+
+        # Included for compatibility ('vars' slices time out for some reason)
+        header['vars'] = list(hdf5file.keys())[1:]
+        header['vars'].remove('nlons')
+        header['vars'].remove('nlats')
+        header['vars'].remove('nalts')
+        header['vars'].remove('nblocks')
+        header['time'] = epoch_to_datetime(
+            np.array(hdf5file['time'])[0])
+        
+        try:
+            header['isEnsemble'] = True if hdf5file.isEnsemble == "True" else False
+        except:
+            header['isEnsemble'] = False
+        if header['isEnsemble']:
+            header['ensembleNumber'] = int(hdf5file.ensembleNumber)
+            header['ensembleMembers'] = int(hdf5file.ensembleMembers)
 
     return header
 
@@ -468,6 +546,7 @@ def read_blocked_netcdf_file(filename, file_vars=None):
         nblocks - number of blocks in file
         vars - list of data variable names
         time - datetime for time of file
+        isEnsemble - if true, stores ensembleNumber and ensembleMembers
         The dictionary also contains a read_routines.DataArray keyed to the
         corresponding variable name. Each DataArray carries both the variable's
         data from the netCDF file and the variable's corresponding attributes.
@@ -514,6 +593,94 @@ def read_blocked_netcdf_file(filename, file_vars=None):
 
         data['time'] = epoch_to_datetime(np.array(ncfile.variables['time'])[0])
 
+        try:
+            data['isEnsemble'] = True if ncfile.isEnsemble == "True" else False
+        except:
+            data['isEnsemble'] = False
+        if data['isEnsemble']:
+            data['ensembleNumber'] = int(ncfile.ensembleNumber)
+            data['ensembleMembers'] = int(ncfile.ensembleMembers)
+            
+    return data
+
+
+def read_blocked_hdf5_file(filename, file_vars=None):
+    """Read all data from a blocked Aether hdf5 file.
+
+    Parameters
+    ----------
+    filename : str
+        An Aether hdf5 filename
+    file_vars : list or NoneType
+        List of desired variable neames to read, or None to read all
+        (default=None)
+
+    Returns
+    -------
+    data : dict
+        A dictionary containing all data from the hdf5 file, including:
+        filename - filename of file containing header data
+        nlons - number of longitude grids per block
+        nlats - number of latitude grids per block
+        nalts - number of altitude grids per block
+        nblocks - number of blocks in file
+        vars - list of data variable names
+        time - datetime for time of file
+        isEnsemble - if true, stores ensembleNumber and ensembleMembers
+        The dictionary also contains a read_routines.DataArray keyed to the
+        corresponding variable name. Each DataArray carries both the variable's
+        data from the hdf5 file and the variable's corresponding attributes.
+
+    Raises
+    --------
+    IOError
+        If the input file does not exist
+    KeyError
+        If any expected dimensions of the input hdf5 file are not present
+
+    Notes
+    -----
+    This routine only works with blocked Aether hdf5 files.
+
+    """
+
+    # Checks for file existence
+    if not os.path.isfile(filename):
+        raise IOError(f"unknown aether hdf5 blocked file: {filename}")
+
+    # NOTE: Includes header information for easy access until
+    #       updated package structure is confirmed
+    # Initialize data dict with defaults (will remove these defaults later)
+    data = {'filename': filename,
+            'units': '',
+            'long_name': None}
+
+    with File(filename, 'r') as hdf5file:
+        # Process header information: nlons, nlats, nalts, nblocks
+        data['nlons'] = hdf5file['nlons'][0]
+        data['nlats'] = hdf5file['nlats'][0]
+        data['nalts'] = hdf5file['nalts'][0]
+        data['nblocks'] = hdf5file['nblocks'][0]
+
+        # Included for compatibility
+        data['vars'] = [var for var in hdf5file.keys()
+                        if file_vars is None or var in file_vars]
+
+        # Fetch requested variable data
+        for key in data['vars']:
+            var = hdf5file[key]  # key is var name
+            data[key] = DataArray(np.array(var), var.__dict__)
+
+        data['time'] = epoch_to_datetime(np.array(hdf5file['time'])[0])
+
+        try:
+            data['isEnsemble'] = True if hdf5file.isEnsemble == "True" else False
+        except:
+            data['isEnsemble'] = False
+        if data['isEnsemble']:
+            data['ensembleNumber'] = int(hdf5file.ensembleNumber)
+            data['ensembleMembers'] = int(hdf5file.ensembleMembers)
+            
     return data
 
 

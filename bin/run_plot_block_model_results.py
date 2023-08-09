@@ -122,6 +122,9 @@ def get_command_line_args(argv):
                         args['has_header'] = True
                 else:
                     args['is_gitm'] = False
+            for fname in fnames:
+                match_bin = re.match(r'(.*)hdf5', fname)
+                args['hdf5'] = True if match_bin else False
 
     # Update default movie extension for POSIX systems
     if args['movie'] > 0 and args['ext'] == 'png':
@@ -484,7 +487,10 @@ def plot_model_block_results():
     # Output help
     if (len(args['filelist']) == 0 or args['help']):
         if (len(args['filelist']) > 0):
-            header = read_routines.read_blocked_netcdf_header(args['filelist'][0])
+            if args['hdf5']:
+                header = read_routines.read_blocked_hdf5_header(args['filelist'][0])
+            else:
+                header = read_routines.read_blocked_netcdf_header(args['filelist'][0])
         else:
             header = {'vars': ''}
         help_str = get_help(header['vars'] if args['help'] else None)
@@ -493,7 +499,10 @@ def plot_model_block_results():
         return
 
     # Read headers for input files (assumes all files have same header)
-    header = read_routines.read_blocked_netcdf_header(args['filelist'][0])
+    if args['hdf5']:
+        header = read_routines.read_blocked_hdf5_header(args['filelist'][0])
+    else:
+        header = read_routines.read_blocked_netcdf_header(args['filelist'][0])
 
     if ('z' in header['vars']):
         print('z is found!')
@@ -512,12 +521,18 @@ def plot_model_block_results():
     common_vars = None
     for filename in args['filelist']:
         # Retrieve data
-        data = read_routines.read_blocked_netcdf_file(filename, file_vars)
+        if args['hdf5']:
+            data = read_routines.read_blocked_hdf5_file(filename, file_vars)
+        else:
+            data = read_routines.read_blocked_netcdf_file(filename, file_vars)
 
         # Search for compatible 3DCOR files, add to data if found
         filename_list = filename.split('/')[:-1]
         searchdir = '.' if len(filename_list) == 0 else '/'.join(filename_list)
-        searchstr = f"{searchdir}/3DCOR*.nc"
+        if args['hdf5']:
+            searchstr = f"{searchdir}/3DCOR*.hdf5"
+        else:
+            searchstr = f"{searchdir}/3DCOR*.nc"
         corner_files = glob(searchstr)
         for f in corner_files:
             corner_data = read_routines.read_aether_file(f)
@@ -572,7 +587,13 @@ def plot_model_block_results():
         # Generate plots for each variable requested
         for var_to_plot in plot_vars:
             var_name_stripped = var_to_plot.replace(" ", "")
-            plot_filename = f"{filename.split('.')[0]}_{var_name_stripped}"
+            if data['isEnsemble'] and data['ensembleMembers'] > 1:
+                plot_filename = f"{filename.split('.')[0][:-3]}{var_name_stripped}_a{alt_to_plot}" \
+                                + f"_{filename.split('/')[-1][6:21]}" \
+                                + f"_e{str(data['ensembleNumber']).zfill(3)}"
+            else:
+                plot_filename = f"{filename.split('.')[0][:-3]}{var_name_stripped}_a{alt_to_plot}" \
+                                + f"_{filename.split('/')[-1][6:21]}"
             try:
                 mini = var_min[var_to_plot]
                 maxi = var_max[var_to_plot]

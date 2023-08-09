@@ -505,7 +505,6 @@ def plot_model_block_results():
         header = read_routines.read_blocked_netcdf_header(args['filelist'][0])
 
     if ('z' in header['vars']):
-        print('z is found!')
         alt_var = 'z'
     else:
         alt_var = 'alt'
@@ -587,13 +586,14 @@ def plot_model_block_results():
         # Generate plots for each variable requested
         for var_to_plot in plot_vars:
             var_name_stripped = var_to_plot.replace(" ", "")
+            sTime = "_" + data['time'].strftime('%Y%m%d_%H%M%S')
+            sAlt = '_a%03d' % alt_to_plot
+
             if data['isEnsemble'] and data['ensembleMembers'] > 1:
-                plot_filename = f"{filename.split('.')[0][:-3]}{var_name_stripped}_a{alt_to_plot}" \
-                                + f"_{filename.split('/')[-1][6:21]}" \
-                                + f"_e{str(data['ensembleNumber']).zfill(3)}"
+                sEns = f"_e{str(data['ensembleNumber']).zfill(3)}"
             else:
-                plot_filename = f"{filename.split('.')[0][:-3]}{var_name_stripped}_a{alt_to_plot}" \
-                                + f"_{filename.split('/')[-1][6:21]}"
+                sEns = ""
+            plot_filename = var_name_stripped + sTime + sAlt + sEns
             try:
                 mini = var_min[var_to_plot]
                 maxi = var_max[var_to_plot]

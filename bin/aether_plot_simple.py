@@ -34,6 +34,12 @@ def get_args():
     parser.add_argument('-alt', metavar = 'alt', default =200, type = int, \
                         help = 'altitude :  alt in km (closest)')
     
+    parser.add_argument('-lat', metavar = 'lat', type = int, \
+                        help = 'latitude :  lat in deg (closest)')
+    
+    parser.add_argument('-lon', metavar = 'lon', type = int, \
+                        help = 'longitude :  lon in deg (closest)')
+    
     parser.add_argument('filelist', nargs='+', \
                         help = 'list files to use for generating plots')
     
@@ -146,6 +152,150 @@ def read_nc_file(filename, file_vars=None):
 
     return data
 
+
+# ----------------------------------------------------------------------
+#
+# ----------------------------------------------------------------------
+
+
+def plot_const_altitude(file, var, alts, iAlt, nBlocks, lonData, latData):
+    valueData = read_nc_file(file, var)
+
+    title = var + ' at %4.0f km at ' % alts[iAlt] + \
+        valueData['time'].strftime('%B %d, %Y; %H:%M:%S UT')
+
+    fig = plt.figure(figsize = (10,8))
+    ax = fig.add_axes([0.075, 0.1, 0.95, 0.8])
+
+    mini = np.min(valueData[var][:, 1:-1, 1:-1, iAlt])
+    maxi = np.max(np.abs(valueData[var][:, 1:-1, 1:-1, iAlt]))
+    if (mini < 0):
+        cmap = cm.bwr
+        mini = -maxi
+    else:
+        cmap = cm.plasma
+
+    for iBlock in range(nBlocks):
+        lon2d = lonData['lon'][iBlock, 1:-1, 1:-1, iAlt]
+        lat2d = latData['lat'][iBlock, 1:-1, 1:-1, iAlt]
+        v2d = valueData[var][iBlock, 1:-1, 1:-1, iAlt]
+        cax = ax.pcolormesh(lon2d, lat2d, v2d, \
+                            vmin = mini, vmax = maxi, cmap = cmap)
+        
+    ax.set_xlabel('Longitude (deg)')
+    ax.set_ylabel('Latitude (deg)')
+    ax.set_ylim([-90.0, 90.0])
+    ax.set_xlim([0.0, 360.0])
+    ax.set_title(title)
+    cbar = fig.colorbar(cax, ax=ax, shrink = 0.75, pad=0.02)
+    cbar.set_label(var,rotation=90)
+
+    var_name_stripped = var.replace(" ", "")
+    sAlt = 'alt%03d' % iAlt
+    sTime = valueData['time'].strftime('%Y%m%d_%H%M%S')
+    outfile = var_name_stripped + '_' + sTime + '_' + sAlt + '.png'
+
+    print('Writing file : ' + outfile)
+    plt.savefig(outfile)
+    plt.close()
+
+
+# ----------------------------------------------------------------------
+#
+# ----------------------------------------------------------------------
+
+
+def plot_const_latitude(file, var, lats, iLat, nBlocks, lonData, altData):
+    valueData = read_nc_file(file, var)
+
+    title = var + ' at %4.0f deg latitude at ' % lats[iLat] + \
+        valueData['time'].strftime('%B %d, %Y; %H:%M:%S UT')
+
+    fig = plt.figure(figsize = (10,8))
+    ax = fig.add_axes([0.075, 0.1, 0.95, 0.8])
+
+    mini = np.min(valueData[var][:, 1:-1, iLat, 1:-1])
+    maxi = np.max(np.abs(valueData[var][:, 1:-1, iLat, 1:-1]))
+    if (mini < 0):
+        cmap = cm.bwr
+        mini = -maxi
+    else:
+        cmap = cm.plasma
+
+    for iBlock in range(nBlocks):
+        if nBlocks == 0 or (iLat >= 0 and iBlock in [2, 3]) or (iLat < 0 and iBlock in [0, 1]):
+            lon2d = lonData['lon'][iBlock, 1:-1, iLat, 1:-1]
+            alt2d = altData['z'][iBlock, 1:-1, iLat, 1:-1]
+            v2d = valueData[var][iBlock, 1:-1, iLat, 1:-1]
+            cax = ax.pcolormesh(lon2d, alt2d, v2d, \
+                                vmin = mini, vmax = maxi, cmap = cmap)
+        
+    ax.set_xlabel('Longitude (deg)')
+    ax.set_ylabel('Altitude (km)')
+    ax.set_ylim([0.0, 355.0])
+    ax.set_xlim([0.0, 360.0])
+    ax.set_title(title)
+    cbar = fig.colorbar(cax, ax=ax, shrink = 0.75, pad=0.02)
+    cbar.set_label(var,rotation=90)
+
+    var_name_stripped = var.replace(" ", "")
+    sLat = 'lat%03d' % iLat
+    sTime = valueData['time'].strftime('%Y%m%d_%H%M%S')
+    outfile = var_name_stripped + '_' + sTime + '_' + sLat + '.png'
+
+    print('Writing file : ' + outfile)
+    plt.savefig(outfile)
+    plt.close()
+
+
+# ----------------------------------------------------------------------
+#
+# ----------------------------------------------------------------------
+
+
+def plot_const_longitude(file, var, lons, iLon, nBlocks, altData, latData):
+    valueData = read_nc_file(file, var)
+
+    title = var + ' at %4.0f deg longitude at ' % lons[iLon] + \
+        valueData['time'].strftime('%B %d, %Y; %H:%M:%S UT')
+
+    fig = plt.figure(figsize = (10,8))
+    ax = fig.add_axes([0.075, 0.1, 0.95, 0.8])
+
+    mini = np.min(valueData[var][:, iLon, 1:-1, 1:-1])
+    maxi = np.max(np.abs(valueData[var][:, iLon, 1:-1, 1:-1]))
+    if (mini < 0):
+        cmap = cm.bwr
+        mini = -maxi
+    else:
+        cmap = cm.plasma
+
+    for iBlock in range(nBlocks):
+        if (iLon >= 180 and iBlock in [1, 3]) or (iLon < 180 and iBlock in [0, 2]):
+            lat2d = latData['lat'][iBlock, iLon, 1:-1, 1:-1]
+            alt2d = altData['z'][iBlock, iLon, 1:-1, 1:-1]
+            v2d = valueData[var][iBlock, iLon, 1:-1, 1:-1]
+            cax = ax.pcolormesh(lat2d, alt2d, v2d, \
+                                vmin = mini, vmax = maxi, cmap = cmap)
+        
+    ax.set_xlabel('Latitude (deg)')
+    ax.set_ylabel('Altitude (km)')
+    ax.set_ylim([0.0, 355.0])
+    ax.set_xlim([-90.0, 90.0])
+    ax.set_title(title)
+    cbar = fig.colorbar(cax, ax=ax, shrink = 0.75, pad=0.02)
+    cbar.set_label(var,rotation=90)
+
+    var_name_stripped = var.replace(" ", "")
+    sLon = 'lon%03d' % iLon
+    sTime = valueData['time'].strftime('%Y%m%d_%H%M%S')
+    outfile = var_name_stripped + '_' + sTime + '_' + sLon + '.png'
+
+    print('Writing file : ' + outfile)
+    plt.savefig(outfile)
+    plt.close()
+
+
 # ----------------------------------------------------------------------
 #
 # ----------------------------------------------------------------------
@@ -167,14 +317,8 @@ if __name__ == '__main__':
         exit()
 
     altData = read_nc_file(args.filelist[0], 'z')
-    alts = altData['z'][0,0,0,:]/1000.0
-    d = np.abs(alts - args.alt)
-    iAlt = np.argmin(d)
-
     lonData = read_nc_file(args.filelist[0], 'lon')
     latData = read_nc_file(args.filelist[0], 'lat')
-    
-    print('Taking a slice at alt = ',alts[iAlt], ' km')
 
     nBlocks = altData['nblocks']
     nLons = altData['nlons']
@@ -182,44 +326,24 @@ if __name__ == '__main__':
 
     var = args.var
 
-    for file in args.filelist:
-    
-        valueData = read_nc_file(file, var)
-
-        title = var + ' at %4.0f km at ' % alts[iAlt] + \
-            valueData['time'].strftime('%B %d, %Y; %H:%M:%S UT')
-    
-        fig = plt.figure(figsize = (10,8))
-        ax = fig.add_axes([0.075, 0.1, 0.95, 0.8])
-
-        mini = np.min(valueData[var][:, 1:-1, 1:-1, iAlt])
-        maxi = np.max(np.abs(valueData[var][:, 1:-1, 1:-1, iAlt]))
-        if (mini < 0):
-            cmap = cm.bwr
-            mini = -maxi
-        else:
-            cmap = cm.plasma
-
-        for iBlock in range(nBlocks):
-            lon2d = lonData['lon'][iBlock, 1:-1, 1:-1, iAlt]
-            lat2d = latData['lat'][iBlock, 1:-1, 1:-1, iAlt]
-            v2d = valueData[var][iBlock, 1:-1, 1:-1, iAlt]
-            cax = ax.pcolormesh(lon2d, lat2d, v2d, \
-                                vmin = mini, vmax = maxi, cmap = cmap)
-            
-        ax.set_xlabel('Longitude (deg)')
-        ax.set_ylabel('Latitude (deg)')
-        ax.set_ylim([-90.0, 90.0])
-        ax.set_xlim([0.0, 360.0])
-        ax.set_title(title)
-        cbar = fig.colorbar(cax, ax=ax, shrink = 0.75, pad=0.02)
-        cbar.set_label(var,rotation=90)
-
-        var_name_stripped = var.replace(" ", "")
-        sAlt = 'alt%03d' % iAlt
-        sTime = valueData['time'].strftime('%Y%m%d_%H%M%S')
-        outfile = var_name_stripped + '_' + sTime + '_' + sAlt + '.png'
-
-        print('Writing file : ' + outfile)
-        plt.savefig(outfile)
-        plt.close()
+    if args.lat:
+        lats = latData['lat'][0,0,:,0]
+        d = np.abs(lats - args.lat)
+        iLat = np.argmin(d)
+        print('Taking a slice at lat = ', lats[iLat], 'deg')
+        for file in args.filelist:
+            plot_const_latitude(file, var, lats, iLat, nBlocks, lonData, altData)
+    elif args.lon:
+        lons = lonData['lon'][0,:,0,0]
+        d = np.abs(lons - args.lon)
+        iLon = np.argmin(d)
+        print('Taking a slice at lon = ', lons[iLon], 'deg')
+        for file in args.filelist:
+            plot_const_longitude(file, var, lons, iLon, nBlocks, altData, latData)
+    else:
+        alts = altData['z'][0,0,0,:]/1000.0
+        d = np.abs(alts - args.alt)
+        iAlt = np.argmin(d)
+        print('Taking a slice at alt = ', alts[iAlt], ' km')
+        for file in args.filelist:
+            plot_const_altitude(file, var, alts, iAlt, nBlocks, lonData, latData)

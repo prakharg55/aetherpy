@@ -223,7 +223,8 @@ def plot_const_latitude(file, var, lats, iLat, nBlocks, lonData, altData):
         cmap = cm.plasma
 
     for iBlock in range(nBlocks):
-        if nBlocks == 0 or (iLat >= 0 and iBlock in [2, 3]) or (iLat < 0 and iBlock in [0, 1]):
+        if nBlocks == 1 or (iLat >= 0 and iBlock in [2, 3]) or \
+            (iLat < 0 and iBlock in [0, 1]):
             lon2d = lonData['lon'][iBlock, 1:-1, iLat, 1:-1]
             alt2d = altData['z'][iBlock, 1:-1, iLat, 1:-1]
             v2d = valueData[var][iBlock, 1:-1, iLat, 1:-1]
@@ -232,7 +233,7 @@ def plot_const_latitude(file, var, lats, iLat, nBlocks, lonData, altData):
         
     ax.set_xlabel('Longitude (deg)')
     ax.set_ylabel('Altitude (km)')
-    ax.set_ylim([0.0, 355.0])
+    ax.set_ylim([95000.0, 350000.0])
     ax.set_xlim([0.0, 360.0])
     ax.set_title(title)
     cbar = fig.colorbar(cax, ax=ax, shrink = 0.75, pad=0.02)
@@ -271,7 +272,8 @@ def plot_const_longitude(file, var, lons, iLon, nBlocks, altData, latData):
         cmap = cm.plasma
 
     for iBlock in range(nBlocks):
-        if (iLon >= 180 and iBlock in [1, 3]) or (iLon < 180 and iBlock in [0, 2]):
+        if nBlocks == 1 or (iLon >= 180 and iBlock in [1, 3]) or \
+            (iLon < 180 and iBlock in [0, 2]):
             lat2d = latData['lat'][iBlock, iLon, 1:-1, 1:-1]
             alt2d = altData['z'][iBlock, iLon, 1:-1, 1:-1]
             v2d = valueData[var][iBlock, iLon, 1:-1, 1:-1]
@@ -280,7 +282,7 @@ def plot_const_longitude(file, var, lons, iLon, nBlocks, altData, latData):
         
     ax.set_xlabel('Latitude (deg)')
     ax.set_ylabel('Altitude (km)')
-    ax.set_ylim([0.0, 355.0])
+    ax.set_ylim([95000.0, 350000.0])
     ax.set_xlim([-90.0, 90.0])
     ax.set_title(title)
     cbar = fig.colorbar(cax, ax=ax, shrink = 0.75, pad=0.02)
@@ -332,18 +334,21 @@ if __name__ == '__main__':
         iLat = np.argmin(d)
         print('Taking a slice at lat = ', lats[iLat], 'deg')
         for file in args.filelist:
-            plot_const_latitude(file, var, lats, iLat, nBlocks, lonData, altData)
+            plot_const_latitude(file, var, lats, iLat, nBlocks, \
+                                lonData, altData)
     elif args.lon:
         lons = lonData['lon'][0,:,0,0]
         d = np.abs(lons - args.lon)
         iLon = np.argmin(d)
         print('Taking a slice at lon = ', lons[iLon], 'deg')
         for file in args.filelist:
-            plot_const_longitude(file, var, lons, iLon, nBlocks, altData, latData)
+            plot_const_longitude(file, var, lons, iLon, nBlocks, \
+                                 altData, latData)
     else:
         alts = altData['z'][0,0,0,:]/1000.0
         d = np.abs(alts - args.alt)
         iAlt = np.argmin(d)
         print('Taking a slice at alt = ', alts[iAlt], ' km')
         for file in args.filelist:
-            plot_const_altitude(file, var, alts, iAlt, nBlocks, lonData, latData)
+            plot_const_altitude(file, var, alts, iAlt, nBlocks, \
+                                lonData, latData)

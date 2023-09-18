@@ -198,8 +198,9 @@ if __name__ == '__main__':
 
     nfiles = len(args.filelist)
     ifile = 0
-    fig = plt.figure(figsize=(nfiles * 4, 4))
-    gs = gridspec.GridSpec(1, nfiles)
+    altvsvarAlts = []
+    altvsvarVars = []
+    times = []
     for file in args.filelist:
     
         valueData = read_nc_file(file, var)
@@ -248,17 +249,20 @@ if __name__ == '__main__':
                     (altvsvarLat >= 0 and altvsvarLon < 180 and iBlock == 2) or \
                     (altvsvarLat < 0 and altvsvarLon >= 180 and iBlock == 1) or \
                     (altvsvarLat < 0 and altvsvarLon < 180 and iBlock == 0):
-                alt2d = altData['z'][iBlock, altvsvarLon, altvsvarLat, 1:-1]
-                v2d = valueData[var][iBlock, altvsvarLon, altvsvarLat, 1:-1]
-        ax = plt.subplot(gs[ifile])
-        ax.plot(v2d, alt2d)
-        ax.set_xlabel(var)
-        if ifile == 0:
-            ax.set_ylabel('Altitude (km)')
-        else:
-            ax.set_yticks([])
-        ax.set_ylim([95000.0, 350000.0])
-        ax.set_title(valueData['time'].strftime('%B %d, %Y; %H:%M:%S UT'))
+                altvsvarAlts.append(altData['z'][iBlock, altvsvarLon, altvsvarLat, 1:-1])
+                altvsvarVars.append(valueData[var][iBlock, altvsvarLon, altvsvarLat, 1:-1])
+        times.append(valueData['time'].strftime('%Y%m%d_%H%M%S'))
         ifile+=1
-    plt.subplots_adjust(wspace=0)
-    plt.savefig(f"Alt_vs_{var}_lat{altvsvarLat}_lon{altvsvarLon}.png", bbox_inches='tight')
+    altvsvarAlts = np.array(altvsvarAlts)
+    altvsvarVars = np.array(altvsvarVars)
+    altvsvarAlts = altvsvarAlts.transpose()
+    altvsvarVars = altvsvarVars.transpose()
+    plt.pcolormesh(times, altvsvarAlts, altvsvarVars)
+    plt.colorbar(label = var)
+    plt.xlabel('Time')
+    plt.ylabel('Altitude (km)')
+    plt.ylim([95000.0, 350000.0])
+    plt.xticks(rotation = 60)
+    plt.subplots_adjust(bottom = 0.35, left = 0.15)
+    plt.savefig(f"Alt_vs_{var}_lat{altvsvarLat}_lon{altvsvarLon}.png")
+    plt.close()

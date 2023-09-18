@@ -226,14 +226,14 @@ def plot_const_latitude(file, var, lats, iLat, nBlocks, lonData, altData):
         if nBlocks == 1 or (iLat >= 0 and iBlock in [2, 3]) or \
             (iLat < 0 and iBlock in [0, 1]):
             lon2d = lonData['lon'][iBlock, 1:-1, iLat, 1:-1]
-            alt2d = altData['z'][iBlock, 1:-1, iLat, 1:-1]
+            alt2d = altData['z'][iBlock, 1:-1, iLat, 1:-1]/1000.0
             v2d = valueData[var][iBlock, 1:-1, iLat, 1:-1]
             cax = ax.pcolormesh(lon2d, alt2d, v2d, \
                                 vmin = mini, vmax = maxi, cmap = cmap)
         
     ax.set_xlabel('Longitude (deg)')
     ax.set_ylabel('Altitude (km)')
-    ax.set_ylim([95000.0, 350000.0])
+    ax.set_ylim([95.0, 350.0])
     ax.set_xlim([0.0, 360.0])
     ax.set_title(title)
     cbar = fig.colorbar(cax, ax=ax, shrink = 0.75, pad=0.02)
@@ -275,14 +275,14 @@ def plot_const_longitude(file, var, lons, iLon, nBlocks, altData, latData):
         if nBlocks == 1 or (iLon >= 180 and iBlock in [1, 3]) or \
             (iLon < 180 and iBlock in [0, 2]):
             lat2d = latData['lat'][iBlock, iLon, 1:-1, 1:-1]
-            alt2d = altData['z'][iBlock, iLon, 1:-1, 1:-1]
+            alt2d = altData['z'][iBlock, iLon, 1:-1, 1:-1]/1000.0
             v2d = valueData[var][iBlock, iLon, 1:-1, 1:-1]
             cax = ax.pcolormesh(lat2d, alt2d, v2d, \
                                 vmin = mini, vmax = maxi, cmap = cmap)
         
     ax.set_xlabel('Latitude (deg)')
     ax.set_ylabel('Altitude (km)')
-    ax.set_ylim([95000.0, 350000.0])
+    ax.set_ylim([95.0, 350.0])
     ax.set_xlim([-90.0, 90.0])
     ax.set_title(title)
     cbar = fig.colorbar(cax, ax=ax, shrink = 0.75, pad=0.02)
